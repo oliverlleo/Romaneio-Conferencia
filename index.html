@@ -8,10 +8,10 @@
     <!-- SDKs do Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
+
     <!-- Biblioteca SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
+
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -37,6 +37,67 @@
             --color-danger-hover: #B91C1C;
             --color-warning: #D97706;
             --color-warning-hover: #B45309;
+        }
+
+        /* --- Mode Switch Component --- */
+        .mode-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: var(--color-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--color-text-light);
+            flex-grow: 1;
+            justify-content: center;
+        }
+        .mode-switch .label-producao {
+            color: var(--color-text);
+        }
+        .mode-switch .label-romaneio {
+            color: var(--color-text);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--color-accent-secondary);
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--color-accent-primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
         }
 
         /* --- Reset e Base --- */
@@ -81,7 +142,7 @@
             gap: 1rem;
             margin-bottom: 1rem;
         }
-        
+
         .status-text {
             text-align: center;
             margin: 2rem 0;
@@ -125,7 +186,7 @@
         .btn--secondary:hover {
             background-color: var(--color-accent-secondary-hover);
         }
-        
+
         .btn--success {
             background-color: var(--color-success);
             color: white;
@@ -149,7 +210,7 @@
         .btn--warning:hover {
             background-color: var(--color-warning-hover);
         }
-        
+
         .btn--text {
             background-color: transparent;
             color: var(--color-accent-primary);
@@ -159,7 +220,7 @@
         .btn--text:hover {
             color: var(--color-accent-primary-hover);
         }
-        
+
         .btn--icon {
             background: transparent;
             border: none;
@@ -200,7 +261,7 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-        
+
         .modal__content--large {
             max-width: 1100px;
         }
@@ -224,13 +285,13 @@
             font-weight: 700;
             margin-bottom: 2rem;
         }
-        
+
         .modal__section {
             margin-top: 2rem;
             padding-top: 1.5rem;
             border-top: 1px solid var(--color-border);
         }
-        
+
         .modal__subtitle {
             font-size: 1.25rem;
             font-weight: 600;
@@ -257,7 +318,7 @@
             outline: 2px solid var(--color-accent-primary);
             border-color: var(--color-accent-primary);
         }
-        
+
         .checklist-item-wrapper {
             display: flex;
             align-items: center;
@@ -412,7 +473,7 @@
         .checklist-menu__checkbox {
             margin-right: 0.5rem;
         }
-        
+
         /* Romaneio (Impressão) */
         .romaneio-page {
             flex-grow: 1;
@@ -553,7 +614,7 @@
             }
 
             body > *:not(#romaneioModal),
-            .modal__close, 
+            .modal__close,
             .romaneio-footer {
                 display: none !important;
             }
@@ -572,7 +633,7 @@
                 padding: 0 !important;
                 margin: 0 !important;
             }
-            
+
             .romaneio-page {
                 font-size: 9pt;
             }
@@ -587,7 +648,7 @@
             .romaneio-item__checklist {
                 border-left: 1px solid #ccc !important;
             }
-            
+
             .romaneio-item__image {
                 max-width: 49% !important; /* Reduzido em 30% (de 70% para 49%) */
             }
@@ -598,14 +659,14 @@
 
     <main class="app-container">
         <h1 class="app-header">Leitor de Planilhas com Regras</h1>
-        
+
         <div class="action-bar">
             <label for="fileInput" class="btn btn--primary">
                 <i data-feather="file-plus"></i>
                 <span>Selecionar Planilha</span>
             </label>
             <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls, .csv">
-            
+
             <button id="configButton" class="btn btn--secondary">
                 <i data-feather="settings"></i>
                 <span>Configurar Regras</span>
@@ -615,13 +676,21 @@
                 <i data-feather="bar-chart-2"></i>
                 <span>Analisar Tabela</span>
             </button>
-            
+
             <button id="romaneioButton" class="btn btn--secondary">
                 <i data-feather="file-text"></i>
                 <span>Gerar Romaneio</span>
             </button>
+            <div class="mode-switch">
+                <span id="label-romaneio" class="label-romaneio">Romaneio</span>
+                <label class="switch">
+                    <input type="checkbox" id="modeToggle">
+                    <span class="slider"></span>
+                </label>
+                <span id="label-producao" class="label-producao">Produção</span>
+            </div>
         </div>
-        
+
         <p id="status" class="status-text">Nenhum arquivo selecionado.</p>
 
         <div id="spreadsheet-header-container" class="spreadsheet-header">
@@ -638,7 +707,7 @@
         <div class="modal__content">
             <span class="close-button modal__close">&times;</span>
             <h2 class="modal__title">Gerenciar Regras</h2>
-            
+
             <!-- Seção para Regras de Código -->
             <div id="rule-form-section" class="modal__section">
                 <h3 id="rule-form-title" class="modal__subtitle">Regras de Código</h3>
@@ -711,12 +780,15 @@
         // --- O CÓDIGO JAVASCRIPT ABAIXO FOI ATUALIZADO PARA GERENCIAR DOIS TIPOS DE REGRAS ---
 
         // --- VARIÁVEIS GLOBAIS ---
-        let rules = []; 
+        let rules = [];
         let partRules = [];
         let codeColumnIndex = -1;
         let fullSpreadsheetData = [];
         let tableHeaderRowIndex = -1;
-        
+        let currentMode = 'romaneio'; // Variável de estado
+        let rulesRef; // Apenas declarar
+        let rulesPartRef; // Apenas declarar
+
         // --- INICIALIZAÇÃO DO FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCB8ye34UIkBghExod4JlBV3oqge5oM2Ic",
@@ -731,8 +803,6 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const rulesRef = database.ref('dados/romaneio');
-        const rulesPartRef = database.ref('dados/romaneioPecas');
 
         // --- LÓGICA DOS MODAIS ---
         const configModal = document.getElementById('configModal');
@@ -752,7 +822,7 @@
             resetRuleForm();
             resetPartRuleForm();
         };
-        
+
         analyzeTableButton.onclick = () => {
             analyzeVisibleTable();
             analysisModal.style.display = 'flex';
@@ -775,7 +845,185 @@
             if (event.target == analysisModal) analysisModal.style.display = 'none';
             if (event.target == romaneioModal) romaneioModal.style.display = 'none';
         };
-        
+
+        // Adicione esta nova função após a seção de LÓGICA DOS MODAIS
+
+        function attachFirebaseListeners() {
+            // --- SINCRONIZAÇÃO COM FIREBASE (REGRAS DE CÓDIGO) ---
+            rulesRef.on('value', (snapshot) => {
+                // Todo o conteúdo existente da função rulesRef.on('value', ...) vai aqui
+                // (Copie e cole o bloco de código que começa com `const data = snapshot.val();` e termina com a chamada `applyRulesToVisibleTable();`)
+                const data = snapshot.val();
+                const rulesListEl = document.getElementById('rulesList');
+                rulesListEl.innerHTML = '';
+                rules = [];
+
+                if (data) {
+                    for (const key in data) {
+                        rules.push({ id: key, ...data[key] });
+                    }
+                    rules.sort((a, b) => a.codigo.localeCompare(b.codigo));
+                    rules.forEach(rule => {
+                        const ruleEl = document.createElement('div');
+                        ruleEl.className = 'rule-item';
+                        const checklistHTML = rule.checklist.map(item => {
+                            if (typeof item === 'string') {
+                                return `<li>■ ${item}</li>`;
+                            }
+                            return `<li>${item.symbol || '■'} ${item.text}</li>`;
+                        }).join('');
+                        ruleEl.innerHTML = `
+                            <div class="rule-item__info">
+                                <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
+                                <ul class="rule-item__checklist">${checklistHTML}</ul>
+                            </div>
+                            <div class="rule-item__actions">
+                                <button data-id="${rule.id}" class="btn btn--secondary edit-rule-btn">
+                                    <i data-feather="edit-2"></i>
+                                </button>
+                                <button data-id="${rule.id}" class="btn btn--danger delete-rule-btn">
+                                    <i data-feather="trash-2"></i>
+                                </button>
+                            </div>
+                        `;
+                        rulesListEl.appendChild(ruleEl);
+                    });
+                } else {
+                    rulesListEl.innerHTML = '<p>Nenhuma regra de código cadastrada.</p>';
+                }
+
+                document.querySelectorAll('.delete-rule-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        if (confirm('Tem certeza que deseja excluir esta regra?')) {
+                            const ruleId = e.currentTarget.getAttribute('data-id');
+                            rulesRef.child(ruleId).remove();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.edit-rule-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const ruleId = e.currentTarget.getAttribute('data-id');
+                        const ruleToEdit = rules.find(r => r.id === ruleId);
+                        if (ruleToEdit) {
+                            document.getElementById('rule-form-title').textContent = 'Editar Regra de Código';
+                            document.getElementById('ruleId').value = ruleToEdit.id;
+                            document.getElementById('ruleCode').value = ruleToEdit.codigo;
+                            newChecklistContainer.innerHTML = '';
+                            ruleToEdit.checklist.forEach(item => {
+                                const itemData = typeof item === 'string' ? { text: item, symbol: '■' } : item;
+                                addChecklistItemInput(itemData, newChecklistContainer, 'code');
+                            });
+                            cancelEditButton.style.display = 'inline-flex';
+                            document.getElementById('rule-form-section').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                });
+
+                feather.replace();
+
+                if (document.querySelector('#table-container table')) {
+                    applyRulesToVisibleTable();
+                }
+            });
+
+            // --- SINCRONIZAÇÃO COM FIREBASE (REGRAS DE PEÇA) ---
+            rulesPartRef.on('value', (snapshot) => {
+                // Todo o conteúdo existente da função rulesPartRef.on('value', ...) vai aqui
+                // (Copie e cole o bloco de código que começa com `const data = snapshot.val();` e termina com a chamada `applyRulesToVisibleTable();`)
+                const data = snapshot.val();
+                const partRulesListEl = document.getElementById('partRulesList');
+                partRulesListEl.innerHTML = '';
+                partRules = [];
+
+                if (data) {
+                    for (const key in data) {
+                        partRules.push({ id: key, ...data[key] });
+                    }
+                    partRules.sort((a, b) => a.codigo.localeCompare(b.codigo));
+                    partRules.forEach(rule => {
+                        const ruleEl = document.createElement('div');
+                        ruleEl.className = 'rule-item';
+                        const checklistHTML = rule.checklist.map(item => `<li>${item.symbol || '■'} ${item.text} (x${item.quantity})</li>`).join('');
+                        ruleEl.innerHTML = `
+                            <div class="rule-item__info">
+                                <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
+                                <ul class="rule-item__checklist">${checklistHTML}</ul>
+                            </div>
+                            <div class="rule-item__actions">
+                                    <button data-id="${rule.id}" class="btn btn--secondary edit-part-rule-btn">
+                                    <i data-feather="edit-2"></i>
+                                </button>
+                                    <button data-id="${rule.id}" class="btn btn--danger delete-part-rule-btn">
+                                    <i data-feather="trash-2"></i>
+                                </button>
+                            </div>
+                        `;
+                        partRulesListEl.appendChild(ruleEl);
+                    });
+                } else {
+                    partRulesListEl.innerHTML = '<p>Nenhuma regra de peça cadastrada.</p>';
+                }
+
+                document.querySelectorAll('.delete-part-rule-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        if (confirm('Tem certeza que deseja excluir esta regra de peça?')) {
+                            const ruleId = e.currentTarget.getAttribute('data-id');
+                            rulesPartRef.child(ruleId).remove();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.edit-part-rule-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const ruleId = e.currentTarget.getAttribute('data-id');
+                        const ruleToEdit = partRules.find(r => r.id === ruleId);
+                        if (ruleToEdit) {
+                            document.getElementById('part-rule-form-title').textContent = 'Editar Regra de Peça';
+                            document.getElementById('partRuleId').value = ruleToEdit.id;
+                            document.getElementById('partRuleCode').value = ruleToEdit.codigo;
+                            newPartChecklistContainer.innerHTML = '';
+                            ruleToEdit.checklist.forEach(item => addChecklistItemInput(item, newPartChecklistContainer, 'part'));
+                            cancelPartEditButton.style.display = 'inline-flex';
+                            document.getElementById('part-rule-form-section').scrollIntoView({ behavior: 'smooth' });
+                        }
+                    });
+                });
+
+                feather.replace();
+
+                if (document.querySelector('#table-container table')) {
+                    applyRulesToVisibleTable();
+                }
+            });
+        }
+
+        function updateMode() {
+            // Desconecta listeners antigos para evitar chamadas duplicadas
+            if (rulesRef) rulesRef.off();
+            if (rulesPartRef) rulesPartRef.off();
+
+            const isProducao = document.getElementById('modeToggle').checked;
+            currentMode = isProducao ? 'producao' : 'romaneio';
+
+            const romaneioBtn = document.getElementById('romaneioButton');
+
+            if (isProducao) {
+                rulesRef = database.ref('dados/producao');
+                rulesPartRef = database.ref('dados/producaoPecas');
+                romaneioBtn.innerHTML = '<i data-feather="file-text"></i><span>Gerar Produção</span>';
+            } else {
+                rulesRef = database.ref('dados/romaneio');
+                rulesPartRef = database.ref('dados/romaneioPecas');
+                romaneioBtn.innerHTML = '<i data-feather="file-text"></i><span>Gerar Romaneio</span>';
+            }
+
+            // Reconecta os listeners para os novos caminhos do Firebase
+            attachFirebaseListeners();
+            // Atualiza os ícones que foram recriados
+            feather.replace();
+        }
+
         // --- LÓGICA DE GERENCIAMENTO DE REGRAS (GERAL) ---
         const addChecklistItemInput = (itemData, container, type = 'code') => {
             const wrapper = document.createElement('div');
@@ -802,7 +1050,7 @@
             newInput.placeholder = 'Item do checklist';
             newInput.className = 'new-checklist-item form-input';
             newInput.value = itemData.text || '';
-            
+
             wrapper.appendChild(handle);
             wrapper.appendChild(symbolSelect);
             wrapper.appendChild(newInput);
@@ -817,7 +1065,7 @@
                 quantityInput.title = 'Quantidade de caixas de seleção';
                 wrapper.appendChild(quantityInput);
             }
-            
+
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn--icon';
             deleteButton.innerHTML = '<i data-feather="x-circle" style="width:20px; height:20px;"></i>';
@@ -855,7 +1103,7 @@
         const cancelEditButton = document.getElementById('cancelEdit');
 
         addChecklistItemButton.addEventListener('click', () => addChecklistItemInput({text: '', symbol: '■'}, newChecklistContainer, 'code'));
-        
+
         newChecklistContainer.addEventListener('dragover', e => {
             e.preventDefault();
             const afterElement = getDragAfterElement(newChecklistContainer, e.clientY);
@@ -877,7 +1125,7 @@
             addChecklistItemInput({text: '', symbol: '■'}, newChecklistContainer, 'code');
             cancelEditButton.style.display = 'none';
         };
-        
+
         cancelEditButton.addEventListener('click', resetRuleForm);
 
         saveRuleButton.addEventListener('click', () => {
@@ -898,7 +1146,7 @@
                 alert('Adicione pelo menos um item ao checklist.');
                 return;
             }
-            
+
             const ruleData = { codigo: code, checklist: checklistItems };
 
             if (ruleId) {
@@ -906,7 +1154,7 @@
             } else {
                 rulesRef.push(ruleData);
             }
-            
+
             resetRuleForm();
         });
 
@@ -917,7 +1165,7 @@
         const cancelPartEditButton = document.getElementById('cancelPartEdit');
 
         addPartChecklistItemButton.addEventListener('click', () => addChecklistItemInput({ text: '', quantity: 1, symbol: '■' }, newPartChecklistContainer, 'part'));
-        
+
         newPartChecklistContainer.addEventListener('dragover', e => {
             e.preventDefault();
             const afterElement = getDragAfterElement(newPartChecklistContainer, e.clientY);
@@ -930,7 +1178,7 @@
                 }
             }
         });
-        
+
         const resetPartRuleForm = () => {
             document.getElementById('part-rule-form-title').textContent = 'Regras de Peça';
             document.getElementById('partRuleId').value = '';
@@ -939,7 +1187,7 @@
             addChecklistItemInput({ text: '', quantity: 1, symbol: '■' }, newPartChecklistContainer, 'part');
             cancelPartEditButton.style.display = 'none';
         };
-        
+
         cancelPartEditButton.addEventListener('click', resetPartRuleForm);
 
         savePartRuleButton.addEventListener('click', () => {
@@ -961,7 +1209,7 @@
                 alert('Adicione pelo menos um item ao checklist da peça.');
                 return;
             }
-            
+
             const ruleData = { codigo: code, checklist: checklistItems };
             if (ruleId) {
                 rulesPartRef.child(ruleId).update(ruleData);
@@ -977,10 +1225,10 @@
             const tableContainer = document.getElementById('table-container');
             const spreadsheetHeaderContainer = document.getElementById('spreadsheet-header-container');
             const statusEl = document.getElementById('status');
-            
-            tableContainer.innerHTML = ''; 
+
+            tableContainer.innerHTML = '';
             spreadsheetHeaderContainer.innerHTML = '';
-            codeColumnIndex = -1; 
+            codeColumnIndex = -1;
             tableHeaderRowIndex = -1;
 
             let header = [];
@@ -997,7 +1245,7 @@
                     }
                 }
             }
-            
+
             if (tableHeaderRowIndex > 0) {
                 const spreadsheetHeaderData = jsonData.slice(0, tableHeaderRowIndex);
                 const headerContent = document.createElement('div');
@@ -1012,7 +1260,7 @@
                     if (filteredCells.length > 0) {
                         const p = document.createElement('p');
                         p.className = 'spreadsheet-header__line';
-                        
+
                         if (String(filteredCells[0]).toLowerCase().includes('planilha de itens')) {
                             p.innerHTML = `<strong>${filteredCells.join(' ')}</strong>`;
                             p.classList.add('spreadsheet-header__line--title');
@@ -1032,13 +1280,13 @@
             if (!header.some(h => typeof h === 'string' && h.toUpperCase() === 'CHECKLIST')) {
                  header.push('Checklist');
             }
-            
+
             const tableData = jsonData.slice(tableHeaderRowIndex !== -1 ? tableHeaderRowIndex + 1 : 0);
             const table = document.createElement('table');
             table.className = "data-table";
             const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
-            
+
             const headerRow = document.createElement('tr');
             header.forEach(headerText => {
                 const th = document.createElement('th');
@@ -1047,7 +1295,7 @@
                 headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
-            
+
             tableData.forEach((rowData) => {
                 if (!rowData || rowData.every(cell => cell === null || cell === '')) return;
                 const dataRow = document.createElement('tr');
@@ -1060,7 +1308,7 @@
                 dataRow.insertCell(-1).className = "data-table__td";
                 tbody.appendChild(dataRow);
             });
-            
+
             table.appendChild(thead);
             table.appendChild(tbody);
 
@@ -1079,7 +1327,7 @@
             footerRow.appendChild(footerCell);
             tfoot.appendChild(footerRow);
             table.appendChild(tfoot);
-            
+
             tableContainer.appendChild(table);
         }
 
@@ -1098,8 +1346,8 @@
                 if (!codeCell || !checklistCell) return;
 
                 const itemCode = (codeCell.textContent || '').trim().toUpperCase();
-                checklistCell.innerHTML = ''; 
-                
+                checklistCell.innerHTML = '';
+
                 let combinedChecklist = [];
 
                 const applicablePartRules = partRules.filter(rule => {
@@ -1111,7 +1359,7 @@
                         rule.checklist.forEach(item => combinedChecklist.push(item.text));
                     });
                 }
-                
+
                 const applicableRules = rules.filter(rule => {
                     const ruleCode = (rule.codigo || '').toUpperCase();
                     return ruleCode && itemCode.includes(ruleCode);
@@ -1172,7 +1420,7 @@
 
                 const resultEl = document.createElement('p');
                 resultEl.className = 'analysis-result__item';
-                
+
                 if (hasChecklist) {
                     resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): TEM CHECKLIST`;
                     resultEl.classList.add('analysis-result__item--success');
@@ -1195,19 +1443,21 @@
                 romaneioItemsContainer.innerHTML = '<p>Carregue uma planilha primeiro.</p>';
                 return;
             }
-            
+
             const spreadsheetHeaderData = fullSpreadsheetData.slice(0, tableHeaderRowIndex);
             spreadsheetHeaderData.forEach(row => {
                 const rowString = row.join('').toUpperCase();
                 if (rowString.includes('OBRA:') || rowString.includes('PREVISÃO DE ENTREGA:') || rowString.includes('VENDEDOR:')) {
-                    return; 
+                    return;
                 }
 
                 const filteredCells = row.filter(cell => cell !== null && String(cell).trim() !== '');
                 if (filteredCells.length > 0) {
                     const p = document.createElement('p');
                     if (String(filteredCells[0]).toLowerCase().includes('planilha de itens')) {
-                        p.innerHTML = `<strong>Romaneio de Conferência</strong>`;
+                        // LINHA MODIFICADA ABAIXO
+                        const title = currentMode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
+                        p.innerHTML = `<strong>${title}</strong>`;
                     } else {
                          p.innerHTML = filteredCells.map(cell => `<span>${cell}</span>`).join('<span style="margin: 0 1rem;">|</span>');
                     }
@@ -1236,7 +1486,7 @@
                         rule.checklist.forEach(item => combinedChecklist.push({ text: item.text, quantity: item.quantity, symbol: item.symbol }));
                     });
                 }
-                
+
                 const applicableRules = rules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
                 if(applicableRules.length > 0) {
                     applicableRules.forEach(rule => {
@@ -1326,156 +1576,11 @@
             romaneioItemsContainer.appendChild(signatureSection);
         }
 
-        // --- SINCRONIZAÇÃO COM FIREBASE (REGRAS DE CÓDIGO) ---
-        rulesRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            const rulesListEl = document.getElementById('rulesList');
-            rulesListEl.innerHTML = '';
-            rules = []; 
-            
-            if (data) {
-                for (const key in data) {
-                    rules.push({ id: key, ...data[key] });
-                }
-                rules.sort((a, b) => a.codigo.localeCompare(b.codigo));
-                rules.forEach(rule => {
-                    const ruleEl = document.createElement('div');
-                    ruleEl.className = 'rule-item';
-                    const checklistHTML = rule.checklist.map(item => {
-                        if (typeof item === 'string') {
-                            return `<li>■ ${item}</li>`;
-                        }
-                        return `<li>${item.symbol || '■'} ${item.text}</li>`;
-                    }).join('');
-                    ruleEl.innerHTML = `
-                        <div class="rule-item__info">
-                            <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
-                            <ul class="rule-item__checklist">${checklistHTML}</ul>
-                        </div>
-                        <div class="rule-item__actions">
-                            <button data-id="${rule.id}" class="btn btn--secondary edit-rule-btn">
-                                <i data-feather="edit-2"></i>
-                            </button>
-                            <button data-id="${rule.id}" class="btn btn--danger delete-rule-btn">
-                                <i data-feather="trash-2"></i>
-                            </button>
-                        </div>
-                    `;
-                    rulesListEl.appendChild(ruleEl);
-                });
-            } else {
-                rulesListEl.innerHTML = '<p>Nenhuma regra de código cadastrada.</p>';
-            }
-            
-            document.querySelectorAll('.delete-rule-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    if (confirm('Tem certeza que deseja excluir esta regra?')) {
-                        const ruleId = e.currentTarget.getAttribute('data-id');
-                        rulesRef.child(ruleId).remove();
-                    }
-                });
-            });
-            
-            document.querySelectorAll('.edit-rule-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const ruleId = e.currentTarget.getAttribute('data-id');
-                    const ruleToEdit = rules.find(r => r.id === ruleId);
-                    if (ruleToEdit) {
-                        document.getElementById('rule-form-title').textContent = 'Editar Regra de Código';
-                        document.getElementById('ruleId').value = ruleToEdit.id;
-                        document.getElementById('ruleCode').value = ruleToEdit.codigo;
-                        newChecklistContainer.innerHTML = '';
-                        ruleToEdit.checklist.forEach(item => {
-                            const itemData = typeof item === 'string' ? { text: item, symbol: '■' } : item;
-                            addChecklistItemInput(itemData, newChecklistContainer, 'code');
-                        });
-                        cancelEditButton.style.display = 'inline-flex';
-                        document.getElementById('rule-form-section').scrollIntoView({ behavior: 'smooth' });
-                    }
-                });
-            });
-
-            feather.replace();
-
-            if (document.querySelector('#table-container table')) {
-                applyRulesToVisibleTable();
-            }
-        });
-
-        // --- SINCRONIZAÇÃO COM FIREBASE (REGRAS DE PEÇA) ---
-        rulesPartRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            const partRulesListEl = document.getElementById('partRulesList');
-            partRulesListEl.innerHTML = '';
-            partRules = []; 
-            
-            if (data) {
-                for (const key in data) {
-                    partRules.push({ id: key, ...data[key] });
-                }
-                partRules.sort((a, b) => a.codigo.localeCompare(b.codigo));
-                partRules.forEach(rule => {
-                    const ruleEl = document.createElement('div');
-                    ruleEl.className = 'rule-item';
-                    const checklistHTML = rule.checklist.map(item => `<li>${item.symbol || '■'} ${item.text} (x${item.quantity})</li>`).join('');
-                    ruleEl.innerHTML = `
-                        <div class="rule-item__info">
-                            <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
-                            <ul class="rule-item__checklist">${checklistHTML}</ul>
-                        </div>
-                        <div class="rule-item__actions">
-                             <button data-id="${rule.id}" class="btn btn--secondary edit-part-rule-btn">
-                                <i data-feather="edit-2"></i>
-                            </button>
-                             <button data-id="${rule.id}" class="btn btn--danger delete-part-rule-btn">
-                                <i data-feather="trash-2"></i>
-                            </button>
-                        </div>
-                    `;
-                    partRulesListEl.appendChild(ruleEl);
-                });
-            } else {
-                partRulesListEl.innerHTML = '<p>Nenhuma regra de peça cadastrada.</p>';
-            }
-            
-            document.querySelectorAll('.delete-part-rule-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    if (confirm('Tem certeza que deseja excluir esta regra de peça?')) {
-                        const ruleId = e.currentTarget.getAttribute('data-id');
-                        rulesPartRef.child(ruleId).remove();
-                    }
-                });
-            });
-
-            document.querySelectorAll('.edit-part-rule-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const ruleId = e.currentTarget.getAttribute('data-id');
-                    const ruleToEdit = partRules.find(r => r.id === ruleId);
-                    if (ruleToEdit) {
-                        document.getElementById('part-rule-form-title').textContent = 'Editar Regra de Peça';
-                        document.getElementById('partRuleId').value = ruleToEdit.id;
-                        document.getElementById('partRuleCode').value = ruleToEdit.codigo;
-                        newPartChecklistContainer.innerHTML = '';
-                        ruleToEdit.checklist.forEach(item => addChecklistItemInput(item, newPartChecklistContainer, 'part'));
-                        cancelPartEditButton.style.display = 'inline-flex';
-                        document.getElementById('part-rule-form-section').scrollIntoView({ behavior: 'smooth' });
-                    }
-                });
-            });
-
-            feather.replace();
-
-            if (document.querySelector('#table-container table')) {
-                applyRulesToVisibleTable();
-            }
-        });
-
-
         // --- LEITURA DO ARQUIVO ---
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const statusEl = document.getElementById('status');
-            
+
             if (!file) {
                 statusEl.textContent = 'Nenhum arquivo selecionado.';
                 document.getElementById('table-container').innerHTML = '';
@@ -1493,8 +1598,8 @@
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
                     fullSpreadsheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-                    
-                    drawInitialTable(fullSpreadsheetData); 
+
+                    drawInitialTable(fullSpreadsheetData);
                     applyRulesToVisibleTable();
 
                     statusEl.textContent = `Exibindo dados de "${file.name}".`;
@@ -1506,10 +1611,14 @@
             reader.readAsBinaryString(file);
         });
 
-        // --- INICIALIZA OS ÍCONES E O FORMULÁRIO ---
-        feather.replace();
+        // --- INICIALIZA O SISTEMA ---
+        document.getElementById('modeToggle').addEventListener('change', updateMode);
+
+        // Configuração inicial ao carregar a página
+        updateMode();
         resetRuleForm();
         resetPartRuleForm();
+        feather.replace(); // Garante que todos os ícones sejam renderizados
     </script>
 </body>
 </html>
