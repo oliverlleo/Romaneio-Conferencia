@@ -1842,7 +1842,7 @@
                     partRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
                     rules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(typeof i === 'string' ? {text: i} : i)));
 
-                    let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist Interativo</h4>`;
+                    let checklistHTML = `<h4 class="conference-item__checklist-title">Checklist Interativo</h4>`;
                     if(combinedChecklist.length > 0) {
                         combinedChecklist.forEach((checkItem, checkIndex) => {
                             const checkId = `check-${clientId}-${itemPos}-${checkIndex}`;
@@ -1850,7 +1850,7 @@
                                 <div class="interactive-checklist-item">
                                     <label for="${checkId}">
                                         <input type="checkbox" id="${checkId}" onchange="updateChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
-                                        <span class="romaneio-item__symbol">${checkItem.symbol || '■'}</span>
+                                        <span class="conference-item__symbol">${checkItem.symbol || '■'}</span>
                                         <span>${checkItem.text}</span>
                                     </label>
                                 </div>
@@ -1863,9 +1863,9 @@
                     contentHTML += `
                         <div class="conference-item">
                             <div class="conference-item__info">
-                                <p class="romaneio-item__pos">Pos. ${itemPos}</p>
-                                <p class="romaneio-item__code">${itemCode}</p>
-                                <p class="romaneio-item__desc">${itemDesc}</p>
+                                <p class="conference-item__pos">Pos. ${itemPos}</p>
+                                <p class="conference-item__code">${itemCode}</p>
+                                <p class="conference-item__desc">${itemDesc}</p>
                             </div>
                             <div class="conference-item__checklist">${checklistHTML}</div>
                         </div>
