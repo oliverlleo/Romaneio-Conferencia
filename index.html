@@ -127,6 +127,54 @@
             background-color: var(--color-panel-bg);
         }
 
+        /* --- Estilos para a nova Tela de Conferência --- */
+    .conference-item {
+        display: flex;
+        flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo em telas pequenas */
+        gap: 2rem;
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        background-color: var(--color-panel-bg);
+    }
+    .conference-item:nth-child(even) {
+        background-color: var(--color-bg); /* Alterna a cor de fundo para melhor legibilidade */
+    }
+
+    .conference-item__info {
+        flex: 1 1 300px; /* Permite que o bloco cresça, mas com base de 300px */
+    }
+
+    .conference-item__checklist {
+        flex: 1 1 400px; /* Permite que o bloco cresça, mas com base de 400px */
+        padding-left: 0;
+        border-left: none;
+    }
+
+    /* Ajuste para o checklist interativo parecer melhor */
+    .interactive-checklist-item {
+        border-radius: 6px; /* Bordas arredondadas */
+        transition: background-color 0.2s;
+    }
+    .interactive-checklist-item:hover {
+        background-color: #F8FAFC; /* Leve destaque no hover */
+    }
+
+    /* --- Responsividade --- */
+    @media (max-width: 768px) {
+        .conference-item__info, .conference-item__checklist {
+            flex-basis: 100%; /* Em telas pequenas, cada seção ocupa 100% da largura */
+        }
+        .conference-item__checklist {
+            padding-left: 0;
+            border-left: none;
+            margin-top: 1.5rem;
+        }
+    }
+
+    /* Melhoria para a tabela do dashboard */
+    #production-dashboard-view .table-wrapper {
+        overflow-x: auto; /* Adiciona scroll horizontal em telas pequenas */
+    }
         /* Estilos para o checklist interativo */
         .interactive-checklist-item {
             display: flex;
@@ -734,7 +782,7 @@
 
             <button id="viewProductionListButton" class="btn btn--primary" style="display: none;">
                 <i data-feather="grid"></i>
-                <span>Acessar Dashboard</span>
+                <span>Acessar Checklist</span>
             </button>
 
             <button id="romaneioButton" class="btn btn--secondary">
@@ -763,7 +811,7 @@
     </main>
 
     <div id="production-dashboard-view" class="production-view">
-        <h2 class="production-view__title">Dashboard de Produção</h2>
+        <h2 class="production-view__title">Checklist de Conferência</h2>
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -1671,13 +1719,18 @@
                 return;
             }
 
-            // Pega o nome do cliente do cabeçalho da planilha
-            const headerTitleEl = document.querySelector('.spreadsheet-header__line--title strong');
-            if (!headerTitleEl) {
-                alert('Não foi possível identificar o nome do cliente no cabeçalho.');
-                return;
+            // Lógica Aprimorada para encontrar o nome do cliente
+            const spreadsheetHeaderData = fullSpreadsheetData.slice(0, tableHeaderRowIndex);
+            let clientName = 'Cliente não identificado'; // Valor padrão
+            // A segunda linha do cabeçalho geralmente contém o nome do cliente.
+            if (spreadsheetHeaderData.length > 1 && spreadsheetHeaderData[1] && spreadsheetHeaderData[1][0]) {
+               clientName = spreadsheetHeaderData[1][0].trim();
             }
-            const clientName = headerTitleEl.textContent.replace('Planilha de Itens ', '').trim();
+
+            if (clientName === 'Cliente não identificado') {
+                 alert('Não foi possível identificar o nome do cliente na segunda linha do cabeçalho da planilha.');
+                 return;
+            }
 
             const clientData = {
                 name: clientName,
@@ -1779,13 +1832,13 @@
                     }
 
                     contentHTML += `
-                        <div class="romaneio-item" style="border-bottom: 2px solid #ccc; align-items: flex-start;">
-                            <div class="romaneio-item__info">
+                        <div class="conference-item">
+                            <div class="conference-item__info">
                                 <p class="romaneio-item__pos">Pos. ${itemPos}</p>
                                 <p class="romaneio-item__code">${itemCode}</p>
                                 <p class="romaneio-item__desc">${itemDesc}</p>
                             </div>
-                            <div class="romaneio-item__checklist">${checklistHTML}</div>
+                            <div class="conference-item__checklist">${checklistHTML}</div>
                         </div>
                     `;
 
