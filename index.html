@@ -130,24 +130,29 @@
         /* --- Estilos para a nova Tela de Conferência --- */
     .conference-item {
         display: flex;
-        flex-wrap: wrap; /* Permite que os itens quebrem para a linha de baixo em telas pequenas */
-        gap: 2rem;
+        flex-wrap: wrap;
+        gap: 1.5rem; /* Reduzindo o espaçamento para um layout mais justo */
         padding: 1.5rem;
         border-bottom: 1px solid var(--color-border);
         background-color: var(--color-panel-bg);
+        align-items: flex-start; /* ADICIONAR ESTA LINHA */
     }
     .conference-item:nth-child(even) {
         background-color: var(--color-bg); /* Alterna a cor de fundo para melhor legibilidade */
     }
 
     .conference-item__info {
-        flex: 1 1 300px; /* Permite que o bloco cresça, mas com base de 300px */
+        flex: 1 1 35%; /* Ocupa 35% do espaço, mas pode crescer/diminuir */
     }
 
     .conference-item__checklist {
-        flex: 1 1 400px; /* Permite que o bloco cresça, mas com base de 400px */
-        padding-left: 0;
-        border-left: none;
+        flex: 1 1 40%;
+    }
+
+    /* ADICIONE ESTA NOVA CLASSE para o container da imagem */
+    .conference-item__image-wrapper {
+        flex: 0 0 20%; /* Não cresce, não diminui, base de 20% do espaço */
+        max-width: 20%;
     }
 
     /* Estilos para os elementos internos da tela de conferência, espelhando o romaneio */
@@ -171,9 +176,10 @@
         margin-top: 0.25rem;
     }
     .conference-item__image {
-        max-width: 70%;
+        max-width: 100%;
         height: auto;
-        margin-top: 1rem;
+        margin-top: 0;
+        border: 1px solid var(--color-border);
     }
     .conference-item__checklist-title {
         font-weight: 600;
@@ -203,6 +209,19 @@
             padding-left: 0;
             border-left: none;
             margin-top: 1.5rem;
+        }
+    }
+
+    /* AJUSTE PARA TELAS MENORES */
+    @media (max-width: 900px) {
+        .conference-item__image-wrapper,
+        .conference-item__info {
+            flex-basis: 50%; /* Imagem e info dividem o espaço */
+            max-width: 50%;
+        }
+        .conference-item__checklist {
+            flex-basis: 100%; /* Checklist vai para a linha de baixo */
+                 margin-top: 1.5rem;
         }
     }
 
@@ -1912,14 +1931,20 @@
 
                     contentHTML += `
                         <div class="conference-item">
+
+                            <div class="conference-item__image-wrapper">
+                                ${imageHTML}
+                            </div>
+
                             <div class="conference-item__info">
                                 <p class="conference-item__pos">Pos. ${itemPos}</p>
                                 <p class="conference-item__code">${itemCode}</p>
                                 <p class="conference-item__desc">${itemDesc}</p>
                                 ${itemTipo ? `<p class="conference-item__tipo">${itemTipo}</p>` : ''}
-                                ${imageHTML}
                             </div>
+
                             <div class="conference-item__checklist">${checklistHTML}</div>
+
                         </div>
                     `;
 
