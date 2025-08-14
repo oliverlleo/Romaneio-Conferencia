@@ -1966,6 +1966,17 @@
         if (window.location.hash && window.location.hash.startsWith('#order=')) {
             const clientId = window.location.hash.substring(7);
             if (clientId) {
+                // --- INÍCIO DA CORREÇÃO CRÍTICA ---
+                // Força o sistema para o modo "Produção" antes de exibir a tela.
+
+                // 1. Marca o interruptor visual para a posição "Produção".
+                document.getElementById('modeToggle').checked = true;
+
+                // 2. Chama a função que atualiza os caminhos do Firebase para buscar as regras de Produção.
+                updateMode();
+                // --- FIM DA CORREÇÃO CRÍTICA ---
+
+                // 3. Agora, com os dados corretos carregados, exibe a tela.
                 showProductionItemView(clientId);
             }
         }
