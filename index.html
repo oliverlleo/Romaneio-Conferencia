@@ -212,16 +212,23 @@
         }
     }
 
-    /* AJUSTE PARA TELAS MENORES */
     @media (max-width: 900px) {
-        .conference-item__image-wrapper,
-        .conference-item__info {
-            flex-basis: 50%; /* Imagem e info dividem o espaço */
-            max-width: 50%;
+        /* Coluna da Imagem: terá uma largura fixa de 140px, sem crescer ou diminuir */
+        .conference-item__image-wrapper {
+            flex: 0 0 140px;
+            max-width: 140px; /* Garante que não ultrapasse a largura definida */
         }
+
+        /* Coluna da Informação: vai crescer para ocupar o espaço restante na linha */
+        .conference-item__info {
+            flex: 1;
+            max-width: none; /* Remove a limitação de largura anterior */
+        }
+
+        /* Coluna do Checklist: continua ocupando 100% da largura na linha de baixo */
         .conference-item__checklist {
-            flex-basis: 100%; /* Checklist vai para a linha de baixo */
-                 margin-top: 1.5rem;
+            flex-basis: 100%;
+            margin-top: 1.5rem;
         }
     }
 
