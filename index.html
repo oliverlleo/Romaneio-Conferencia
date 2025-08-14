@@ -873,6 +873,9 @@
 
     <div id="production-dashboard-view" class="production-view">
         <h2 class="production-view__title">Checklist de Conferência</h2>
+        <div style="max-width: 900px; margin: 0 auto 1.5rem auto;">
+            <input type="text" id="clientSearchInput" class="form-input" placeholder="Buscar cliente pelo nome...">
+        </div>
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -1774,6 +1777,27 @@
 
         // --- NOVAS FUNÇÕES DE PRODUÇÃO ---
 
+    function calculateTotalChecklistItems(spreadsheetData, rules, partRules) {
+        if (!spreadsheetData || spreadsheetData.length === 0) return 0;
+
+        const localTableHeaderRowIndex = spreadsheetData.findIndex(row => row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+        if (localTableHeaderRowIndex === -1) return 0;
+
+        const localCodeColumnIndex = spreadsheetData[localTableHeaderRowIndex].findIndex(cell => String(cell).toUpperCase().includes('CÓDIGO'));
+        const tableData = spreadsheetData.slice(localTableHeaderRowIndex + 1);
+        let totalItems = 0;
+
+        tableData.forEach(rowData => {
+            const itemCode = String(rowData[localCodeColumnIndex] || '').trim().toUpperCase();
+            if (!itemCode) return;
+
+            partRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => totalItems++));
+            rules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => totalItems++));
+        });
+
+        return totalItems;
+    }
+
     function saveClientForProduction() {
         if (fullSpreadsheetData.length === 0) {
             alert('Nenhuma planilha carregada para salvar.');
@@ -1824,49 +1848,69 @@
             });
     }
 
-    function showProductionDashboard() {
+    async function showProductionDashboard() {
         document.querySelector('.app-container').style.display = 'none';
         const dashboardView = document.getElementById('production-dashboard-view');
         dashboardView.style.display = 'block';
 
         const listBody = document.getElementById('production-clients-list');
-        listBody.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+        listBody.innerHTML = '<tr><td colspan="3">Carregando dados de progresso...</td></tr>';
 
-        // Garante que o header da tabela está correto para as duas ações
-         dashboardView.querySelector('.data-table thead tr').innerHTML = `
+        dashboardView.querySelector('.data-table thead tr').innerHTML = `
             <th class="data-table__th">Nome do Cliente</th>
+            <th class="data-table__th" style="width: 150px;">Progresso (%)</th>
             <th class="data-table__th" style="width: 220px;">Ações</th>
         `;
 
-        const productionClientsRef = database.ref('dados/producao_clientes');
-        productionClientsRef.once('value', snapshot => {
-            listBody.innerHTML = '';
-            const clients = snapshot.val();
-            if (clients) {
-                Object.keys(clients).forEach(clientId => {
-                    const client = clients[clientId];
-                    const row = document.createElement('tr');
+        const clientsSnapshot = await database.ref('dados/producao_clientes').once('value');
+        const clients = clientsSnapshot.val();
 
-                    // --- HTML CORRETO COM OS DOIS BOTÕES ---
-                    row.innerHTML = `
-                        <td class="data-table__td">${client.name}</td>
-                        <td class="data-table__td">
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button class="btn btn--primary" onclick="showProductionItemView('${clientId}')">Ver Ordem</button>
-                                <button class="btn btn--secondary" title="Compartilhar Link" onclick="shareOrderLink('${clientId}')">
-                                    <i data-feather="share-2" style="width: 16px; height: 16px;"></i>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    listBody.appendChild(row);
-                });
-            } else {
-                listBody.innerHTML = '<tr><td colspan="2">Nenhum cliente em produção.</td></tr>';
-            }
-            // Garante que os novos ícones sejam renderizados
-            feather.replace();
+        if (!clients) {
+            listBody.innerHTML = '<tr><td colspan="3">Nenhum cliente em produção.</td></tr>';
+            return;
+        }
+
+        const promises = Object.keys(clients).map(async (clientId) => {
+            const client = clients[clientId];
+            const statusSnapshot = await database.ref(`dados/producao_checklist_status/${clientId}`).once('value');
+            const statuses = statusSnapshot.val() || {};
+
+            const completedItems = Object.values(statuses).reduce((count, item) => {
+                return count + Object.values(item).filter(status => status === true).length;
+            }, 0);
+
+            const totalItems = calculateTotalChecklistItems(client.spreadsheetData, rules, partRules);
+            const percentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+            return { ...client, id: clientId, percentage: percentage };
         });
+
+        const clientsWithProgress = await Promise.all(promises);
+
+        listBody.innerHTML = '';
+        clientsWithProgress.sort((a, b) => a.name.localeCompare(b.name)).forEach(client => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="data-table__td">${client.name}</td>
+                <td class="data-table__td" style="font-weight: 600;">
+                    <div style="width: 100%; background-color: #E2E8F0; border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${client.percentage}%; background-color: var(--color-success); color: white; text-align: center; padding: 2px 0;">
+                            ${client.percentage}%
+                        </div>
+                    </div>
+                </td>
+                <td class="data-table__td">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn--primary" onclick="showProductionItemView('${client.id}')">Ver Ordem</button>
+                        <button class="btn btn--secondary" title="Compartilhar Link" onclick="shareOrderLink('${client.id}')">
+                            <i data-feather="share-2" style="width: 16px; height: 16px;"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            listBody.appendChild(row);
+        });
+        feather.replace();
     }
 
         function showProductionItemView(clientId) {
@@ -2064,6 +2108,19 @@
                 showProductionItemView(clientId);
             }
         }
+    });
+
+    document.getElementById('clientSearchInput')?.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('#production-clients-list tr');
+        rows.forEach(row => {
+            const clientName = row.querySelector('td:first-child')?.textContent.toLowerCase();
+            if (clientName && clientName.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     });
     </script>
 </body>
