@@ -150,6 +150,41 @@
         border-left: none;
     }
 
+    /* Estilos para os elementos internos da tela de conferência, espelhando o romaneio */
+    .conference-item__pos {
+        font-size: 0.9rem;
+        color: var(--color-text-light);
+        font-weight: 500;
+    }
+    .conference-item__code {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+    .conference-item__desc {
+        font-size: 1rem;
+        color: var(--color-text-light);
+    }
+    .conference-item__tipo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--color-danger);
+        margin-top: 0.25rem;
+    }
+    .conference-item__image {
+        max-width: 70%;
+        height: auto;
+        margin-top: 1rem;
+    }
+    .conference-item__checklist-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .conference-item__symbol {
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+
     /* Ajuste para o checklist interativo parecer melhor */
     .interactive-checklist-item {
         border-radius: 6px; /* Bordas arredondadas */
@@ -1827,6 +1862,7 @@
                 const localCodeColumnIndex = clientData.spreadsheetData[localTableHeaderRowIndex].findIndex(cell => String(cell).toUpperCase().includes('CÓDIGO'));
                 const tableHeader = clientData.spreadsheetData[localTableHeaderRowIndex];
                 const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+                const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
 
                 let contentHTML = `<h2 class="production-view__title">Acompanhamento: ${clientData.name}</h2>`;
 
@@ -1837,6 +1873,20 @@
 
                     const itemPos = String(rowData[0] || index + 1);
                     const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
+                    const itemTipo = tipoColumnIndex !== -1 ? String(rowData[tipoColumnIndex] || '') : '';
+
+                    const imageMapping = {
+                        PCR: 'pcr.png', JCR: 'jcr.png', PGR: 'pgr.png',
+                        FIX: 'fix.png', ABT: 'abt.png', IPC: 'ipc.png',
+                        IJC: 'ijc.png', PIV: 'piv.png', MAX: 'max.png'
+                    };
+                    let imageHTML = '';
+                    for (const key in imageMapping) {
+                        if (itemCode.includes(key)) {
+                            imageHTML = `<img src="${imageMapping[key]}" class="conference-item__image" alt="Imagem ${key}">`;
+                            break;
+                        }
+                    }
 
                     let combinedChecklist = [];
                     partRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
@@ -1866,6 +1916,8 @@
                                 <p class="conference-item__pos">Pos. ${itemPos}</p>
                                 <p class="conference-item__code">${itemCode}</p>
                                 <p class="conference-item__desc">${itemDesc}</p>
+                                ${itemTipo ? `<p class="conference-item__tipo">${itemTipo}</p>` : ''}
+                                ${imageHTML}
                             </div>
                             <div class="conference-item__checklist">${checklistHTML}</div>
                         </div>
