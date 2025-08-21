@@ -753,7 +753,8 @@
                     let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist Interativo</h4>`;
                     if(combinedChecklist.length > 0) {
                         combinedChecklist.forEach((checkItem, checkIndex) => {
-                            const checkId = `check-${clientId}-${itemPos}-${checkIndex}`;
+                            const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
+                            const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
                             checklistHTML += `
                                 <div class="interactive-checklist-item">
                                     <label for="${checkId}">
@@ -783,9 +784,23 @@
                     if(statuses) {
                         Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
                             Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                const inputs = document.querySelectorAll(`input[onchange*="'${itemPos}'"][onchange*="'${itemText.replace(/'/g, "\\'")}"]`);
-                                if(inputs.length > 0) {
-                                    inputs[0].checked = isChecked;
+                                const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
+                                // Precisa reconstruir o combinedChecklist para encontrar o checkIndex
+                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
+                                if(itemRow) {
+                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
+                                    let tempCombinedChecklist = [];
+                                    productionPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push(i)));
+                                    productionRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push({ ...i, quantity: 1 })));
+                                    
+                                    const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
+                                    if(checkIndex !== -1) {
+                                        const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                        const checkbox = document.getElementById(checkId);
+                                        if (checkbox) {
+                                            checkbox.checked = isChecked;
+                                        }
+                                    }
                                 }
                             });
                         });
