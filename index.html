@@ -1636,190 +1636,175 @@
         }
 
 
-        async function generateDocument(clientId, mode) {
-            try {
-                const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
-                const clientData = clientSnapshot.val();
-                if (!clientData || !clientData.spreadsheetData) {
-                    alert('Erro: Dados do cliente não encontrados ou inválidos.');
-                    return;
-                }
+    // SUBSTITUA A FASE 5 ANTERIOR POR ESTE BLOCO INTEIRO
 
-                const rulesPath = (mode === 'producao') ? 'dados/producao' : 'dados/romaneio';
-                const partRulesPath = (mode === 'producao') ? 'dados/producaoPecas' : 'dados/romaneioPecas';
-
-                const [rulesSnapshot, partRulesSnapshot] = await Promise.all([
-                    database.ref(rulesPath).once('value'),
-                    database.ref(partRulesPath).once('value')
-                ]);
-
-                const loadedRules = [];
-                const rulesData = rulesSnapshot.val();
-                if (rulesData) {
-                    for (const key in rulesData) loadedRules.push({ id: key, ...rulesData[key] });
-                }
-
-                const loadedPartRules = [];
-                const partRulesData = partRulesSnapshot.val();
-                if (partRulesData) {
-                    for (const key in partRulesData) loadedPartRules.push({ id: key, ...partRulesData[key] });
-                }
-
-                renderDocument(clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
-
-            } catch (error) {
-                console.error("Erro ao gerar documento:", error);
-                alert("Ocorreu um erro ao gerar o documento.");
-            }
-        }
-
-        function renderDocument(spreadsheetData, documentRules, documentPartRules, mode) {
-            const romaneioHeaderContainer = document.getElementById('romaneio-header');
-            const romaneioItemsContainer = document.getElementById('romaneio-items');
-            romaneioHeaderContainer.innerHTML = '';
-            romaneioItemsContainer.innerHTML = '';
-
-            const localTableHeaderRowIndex = spreadsheetData.findIndex(row => row && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
-
-            if (localTableHeaderRowIndex === -1) {
-                romaneioItemsContainer.innerHTML = '<p>Carregue uma planilha primeiro.</p>';
-                romaneioModal.style.display = 'flex';
+    async function generateDocument(clientId, mode) {
+        try {
+            // 1. Buscar dados do cliente
+            const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
+            const clientData = clientSnapshot.val();
+            if (!clientData || !clientData.spreadsheetData) {
+                alert('Erro: Dados do cliente não encontrados ou inválidos.');
                 return;
             }
-             const localCodeColumnIndex = spreadsheetData[localTableHeaderRowIndex].findIndex(cell => String(cell).toUpperCase().includes('CÓDIGO'));
 
+            // 2. Determinar caminhos e buscar as regras corretas (código e peças) em paralelo
+            const rulesPath = (mode === 'producao') ? 'dados/producao' : 'dados/romaneio';
+            const partRulesPath = (mode === 'producao') ? 'dados/producaoPecas' : 'dados/romaneioPecas';
 
-            const spreadsheetHeaderData = spreadsheetData.slice(0, localTableHeaderRowIndex);
-            spreadsheetHeaderData.forEach(row => {
-                const rowString = row.join('').toUpperCase();
-                if (rowString.includes('OBRA:') || rowString.includes('PREVISÃO DE ENTREGA:') || rowString.includes('VENDEDOR:')) {
-                    return;
-                }
+            const [rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                database.ref(rulesPath).once('value'),
+                database.ref(partRulesPath).once('value')
+            ]);
 
-                const filteredCells = row.filter(cell => cell !== null && String(cell).trim() !== '');
-                if (filteredCells.length > 0) {
-                    const p = document.createElement('p');
-                    if (String(filteredCells[0]).toLowerCase().includes('planilha de itens')) {
-                        const title = mode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
-                        p.innerHTML = `<strong>${title}</strong>`;
-                    } else {
-                         p.innerHTML = filteredCells.map(cell => `<span>${cell}</span>`).join('<span style="margin: 0 1rem;">|</span>');
-                    }
-                    romaneioHeaderContainer.appendChild(p);
-                }
-            });
-
-            const tableData = spreadsheetData.slice(localTableHeaderRowIndex + 1);
-            const tableHeader = spreadsheetData[localTableHeaderRowIndex];
-            const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
-            const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
-
-            tableData.forEach((rowData, index) => {
-                const itemCode = String(rowData[localCodeColumnIndex] || '').trim().toUpperCase();
-                if (!itemCode) return;
-
-                const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
-                const itemTipo = tipoColumnIndex !== -1 ? String(rowData[tipoColumnIndex] || '') : '';
-                const itemPos = String(rowData[0] || index + 1);
-
-                let combinedChecklist = [];
-
-                const applicablePartRules = documentPartRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
-                if(applicablePartRules.length > 0) {
-                    applicablePartRules.forEach(rule => {
-                        rule.checklist.forEach(item => combinedChecklist.push({ text: item.text, quantity: item.quantity, symbol: item.symbol }));
-                    });
-                }
-
-                const applicableRules = documentRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
-                if(applicableRules.length > 0) {
-                    applicableRules.forEach(rule => {
-                        rule.checklist.forEach(item => {
-                            if (typeof item === 'string') {
-                                combinedChecklist.push({ text: item, quantity: 1, symbol: '■' });
-                            } else {
-                                combinedChecklist.push({ text: item.text, quantity: 1, symbol: item.symbol });
-                            }
-                        });
-                    });
-                }
-
-                const itemCard = document.createElement('div');
-                itemCard.className = 'romaneio-item';
-
-                let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist de Conferência</h4>`;
-                if (combinedChecklist.length > 0) {
-                    combinedChecklist.forEach(checkItem => {
-                        let boxesHTML = '';
-                        for (let i = 0; i < checkItem.quantity; i++) {
-                            boxesHTML += '<div class="romaneio-item__checkbox-box"></div>';
-                        }
-                        checklistHTML += `
-                            <div class="romaneio-item__checklist-item">
-                                <div>
-                                    <span class="romaneio-item__symbol">${checkItem.symbol || '■'}</span>
-                                    <span>${checkItem.text}</span>
-                                </div>
-                                <div class="romaneio-item__checkbox-group">${boxesHTML}</div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    checklistHTML += '<p style="font-size: 0.9rem; color: var(--color-text-light);">Nenhum checklist para este item.</p>';
-                }
-
-                const imageMapping = {
-                    PCR: 'pcr.png', JCR: 'jcr.png', PGR: 'pgr.png',
-                    FIX: 'fix.png', ABT: 'abt.png', IPC: 'ipc.png',
-                    IJC: 'ijc.png', PIV: 'piv.png', MAX: 'max.png'
-                };
-                let imageHTML = '';
-                for (const key in imageMapping) {
-                    if (itemCode.includes(key)) {
-                        imageHTML = `<img src="${imageMapping[key]}" class="romaneio-item__image" alt="Imagem ${key}">`;
-                        break;
-                    }
-                }
-
-                itemCard.innerHTML = `
-                    <div class="romaneio-item__info">
-                        <p class="romaneio-item__pos">Pos. ${itemPos}</p>
-                        <p class="romaneio-item__code">${itemCode}</p>
-                        <p class="romaneio-item__desc">${itemDesc}</p>
-                        ${itemTipo ? `<p class="romaneio-item__tipo">${itemTipo}</p>` : ''}
-                        ${imageHTML}
-                    </div>
-                    <div class="romaneio-item__checklist">${checklistHTML}</div>
-                `;
-                romaneioItemsContainer.appendChild(itemCard);
-            });
-
-            const observationNotes = document.getElementById('observation-notes');
-            if (observationNotes && observationNotes.value.trim() !== '') {
-                const observationSection = document.createElement('div');
-                observationSection.className = 'romaneio-observations';
-                observationSection.innerHTML = `
-                    <h4 class="romaneio-item__checklist-title">Observações</h4>
-                    <p style="white-space: pre-wrap;">${observationNotes.value}</p>
-                `;
-                romaneioItemsContainer.appendChild(observationSection);
+            const loadedRules = [];
+            const rulesData = rulesSnapshot.val();
+            if (rulesData) {
+                for (const key in rulesData) loadedRules.push({ id: key, ...rulesData[key] });
             }
 
-            const signatureSection = document.createElement('div');
-            signatureSection.className = 'romaneio-signatures';
-            signatureSection.innerHTML = `
-                <div class="signature-line">
-                    <div></div>
-                    <p>Assinatura Conferente</p>
-                </div>
-                <div class="signature-line">
-                    <div></div>
-                    <p>Assinatura do Supervisor</p>
-                </div>
-            `;
-            romaneioItemsContainer.appendChild(signatureSection);
-            romaneioModal.style.display = 'flex';
+            const loadedPartRules = [];
+            const partRulesData = partRulesSnapshot.val();
+            if (partRulesData) {
+                for (const key in partRulesData) loadedPartRules.push({ id: key, ...partRulesData[key] });
+            }
+
+            // 3. Chamar a função de renderização com todos os dados necessários
+            renderDocument(clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
+
+        } catch (error) {
+            console.error("Erro ao gerar documento:", error);
+            alert("Ocorreu um erro ao gerar o documento. Verifique o console para mais detalhes.");
         }
+    }
+
+    function renderDocument(spreadsheetData, documentRules, documentPartRules, mode) {
+        const romaneioHeaderContainer = document.getElementById('romaneio-header');
+        const romaneioItemsContainer = document.getElementById('romaneio-items');
+        romaneioHeaderContainer.innerHTML = '';
+        romaneioItemsContainer.innerHTML = '';
+
+        if (spreadsheetData.length === 0) {
+            romaneioItemsContainer.innerHTML = '<p>Dados da planilha estão vazios.</p>';
+            return;
+        }
+
+        // Lógica de busca de índices DENTRO dos dados recebidos
+        let localTableHeaderRowIndex = spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+        if (localTableHeaderRowIndex === -1) {
+             romaneioItemsContainer.innerHTML = '<p>Não foi possível encontrar a linha de cabeçalho com a coluna "CÓDIGO" nos dados do cliente.</p>';
+             return;
+        }
+        const tableHeader = spreadsheetData[localTableHeaderRowIndex];
+        const localCodeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
+        const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+        const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
+
+
+        // Renderização do cabeçalho
+        const title = mode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
+        const spreadsheetHeaderData = spreadsheetData.slice(0, localTableHeaderRowIndex);
+        spreadsheetHeaderData.forEach(row => {
+            const filteredCells = row.filter(cell => cell !== null && String(cell).trim() !== '');
+            if (filteredCells.length > 0) {
+                const p = document.createElement('p');
+                if (String(filteredCells[0]).toLowerCase().includes('planilha de itens')) {
+                    p.innerHTML = `<strong>${title}</strong>`;
+                } else {
+                     p.innerHTML = filteredCells.map(cell => `<span>${cell}</span>`).join('<span style="margin: 0 1rem;">|</span>');
+                }
+                romaneioHeaderContainer.appendChild(p);
+            }
+        });
+
+        // Renderização dos itens
+        const tableData = spreadsheetData.slice(localTableHeaderRowIndex + 1);
+        tableData.forEach((rowData, index) => {
+            const itemCode = String(rowData[localCodeColumnIndex] || '').trim().toUpperCase();
+            if (!itemCode) return;
+
+            const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
+            const itemTipo = tipoColumnIndex !== -1 ? String(rowData[tipoColumnIndex] || '') : '';
+            const itemPos = String(rowData[0] || index + 1);
+
+            let combinedChecklist = [];
+            // Usa as regras recebidas por parâmetro
+            const applicablePartRules = documentPartRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
+            applicablePartRules.forEach(rule => {
+                rule.checklist.forEach(item => combinedChecklist.push({ text: item.text, quantity: item.quantity, symbol: item.symbol }));
+            });
+            const applicableRules = documentRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
+            applicableRules.forEach(rule => {
+                rule.checklist.forEach(item => {
+                    if (typeof item === 'string') {
+                        combinedChecklist.push({ text: item, quantity: 1, symbol: '■' });
+                    } else {
+                        combinedChecklist.push({ text: item.text, quantity: 1, symbol: item.symbol });
+                    }
+                });
+            });
+
+            let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist de Conferência</h4>`;
+            if (combinedChecklist.length > 0) {
+                combinedChecklist.forEach(checkItem => {
+                    let boxesHTML = '';
+                    for (let i = 0; i < checkItem.quantity; i++) {
+                        boxesHTML += '<div class="romaneio-item__checkbox-box"></div>';
+                    }
+                    checklistHTML += `
+                        <div class="romaneio-item__checklist-item">
+                            <div>
+                                <span class="romaneio-item__symbol">${checkItem.symbol || '■'}</span>
+                                <span>${checkItem.text}</span>
+                            </div>
+                            <div class="romaneio-item__checkbox-group">${boxesHTML}</div>
+                        </div>
+                    `;
+                });
+            } else {
+                checklistHTML += '<p style="font-size: 0.9rem; color: var(--color-text-light);">Nenhum checklist para este item.</p>';
+            }
+
+            const imageMapping = {
+                PCR: 'pcr.png', JCR: 'jcr.png', PGR: 'pgr.png',
+                FIX: 'fix.png', ABT: 'abt.png', IPC: 'ipc.png',
+                IJC: 'ijc.png', PIV: 'piv.png', MAX: 'max.png'
+            };
+            let imageHTML = '';
+            for (const key in imageMapping) {
+                if (itemCode.includes(key)) {
+                    imageHTML = `<img src="${imageMapping[key]}" class="romaneio-item__image" alt="Imagem ${key}">`;
+                    break;
+                }
+            }
+
+            const itemCard = document.createElement('div');
+            itemCard.className = 'romaneio-item';
+            itemCard.innerHTML = `
+                <div class="romaneio-item__info">
+                    <p class="romaneio-item__pos">Pos. ${itemPos}</p>
+                    <p class="romaneio-item__code">${itemCode}</p>
+                    <p class="romaneio-item__desc">${itemDesc}</p>
+                    ${itemTipo ? `<p class="romaneio-item__tipo">${itemTipo}</p>` : ''}
+                    ${imageHTML}
+                </div>
+                <div class="romaneio-item__checklist">${checklistHTML}</div>
+            `;
+            romaneioItemsContainer.appendChild(itemCard);
+        });
+
+        // Rodapé e assinaturas
+        const signatureSection = document.createElement('div');
+        signatureSection.className = 'romaneio-signatures';
+        signatureSection.innerHTML = `
+            <div class="signature-line"><div></div><p>Assinatura Conferente</p></div>
+            <div class="signature-line"><div></div><p>Assinatura do Supervisor</p></div>
+        `;
+        romaneioItemsContainer.appendChild(signatureSection);
+
+        // Exibe o modal
+        romaneioModal.style.display = 'flex';
+    }
 
         // --- NOVAS FUNÇÕES DE PRODUÇÃO ---
 
