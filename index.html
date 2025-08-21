@@ -828,36 +828,18 @@
 
             <button id="configButton" class="btn btn--secondary">
                 <i data-feather="settings"></i>
-                <span>Configurar Regras</span>
+                <span>Configurações</span>
             </button>
 
-            <button id="analyzeTableButton" class="btn btn--warning">
-                <i data-feather="bar-chart-2"></i>
-                <span>Analisar Tabela</span>
+            <button id="accessClientsButton" class="btn btn--primary">
+                <i data-feather="users"></i>
+                <span>Acessar Clientes</span>
             </button>
 
             <button id="saveClientButton" class="btn btn--success" style="display: none;">
                 <i data-feather="save"></i>
-                <span>Salvar Cliente p/ Produção</span>
+                <span>Salvar Cliente</span>
             </button>
-
-            <button id="viewProductionListButton" class="btn btn--primary" style="display: none;">
-                <i data-feather="grid"></i>
-                <span>Acessar Checklist</span>
-            </button>
-
-            <button id="romaneioButton" class="btn btn--secondary">
-                <i data-feather="file-text"></i>
-                <span>Gerar Romaneio</span>
-            </button>
-            <div class="mode-switch">
-                <span id="label-romaneio" class="label-romaneio">Romaneio</span>
-                <label class="switch">
-                    <input type="checkbox" id="modeToggle">
-                    <span class="slider"></span>
-                </label>
-                <span id="label-producao" class="label-producao">Produção</span>
-            </div>
         </div>
 
         <p id="status" class="status-text">Nenhum arquivo selecionado.</p>
@@ -873,6 +855,10 @@
 
     <div id="production-dashboard-view" class="production-view">
         <h2 class="production-view__title">Checklist de Conferência</h2>
+        <button class="btn btn--primary" style="margin-bottom: 2rem; max-width: 200px;" onclick="showMainView()">
+            <i data-feather="arrow-left"></i>
+            <span>Voltar</span>
+        </button>
         <div class="table-wrapper">
             <table class="data-table">
                 <thead>
@@ -890,11 +876,25 @@
     <div id="production-item-view" class="production-view">
     </div>
 
+    <div id="configuration-view" class="production-view" style="display: none;">
+        <div style="max-width: 900px; margin: 0 auto;">
+            <h2 class="production-view__title">Configurações</h2>
+            <div class="action-bar" style="margin-bottom: 2rem;">
+                <button id="config-mode-romaneio" class="btn btn--secondary">Regras de Romaneio</button>
+                <button id="config-mode-producao" class="btn btn--secondary" style="background-color: var(--color-text-light);">Regras de Produção</button>
+            </div>
+            <div id="config-forms-container">
+                </div>
+             <button id="backToMainView" class="btn btn--primary" style="margin-top: 2rem;">
+                <i data-feather="arrow-left"></i>
+                <span>Voltar</span>
+            </button>
+        </div>
+    </div>
+
     <!-- Modal de Configurações -->
     <div id="configModal" class="modal">
         <div class="modal__content">
-            <span class="close-button modal__close">&times;</span>
-            <h2 class="modal__title">Gerenciar Regras</h2>
 
             <!-- Seção para Regras de Código -->
             <div id="rule-form-section" class="modal__section">
@@ -937,15 +937,6 @@
         </div>
     </div>
 
-    <!-- Modal de Análise -->
-    <div id="analysisModal" class="modal">
-        <div class="modal__content">
-            <span class="close-analysis-button modal__close">&times;</span>
-            <h2 class="modal__title">Resultado da Análise</h2>
-            <div id="analysisResult" class="analysis-result"></div>
-        </div>
-    </div>
-
     <!-- Modal de Romaneio -->
     <div id="romaneioModal" class="modal">
         <div class="modal__content modal__content--large">
@@ -973,7 +964,6 @@
         let codeColumnIndex = -1;
         let fullSpreadsheetData = [];
         let tableHeaderRowIndex = -1;
-        let currentMode = 'romaneio'; // Variável de estado
         let rulesRef; // Apenas declarar
         let rulesPartRef; // Apenas declarar
 
@@ -992,49 +982,84 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // --- LÓGICA DOS MODAIS ---
+        // --- LÓGICA DOS MODAIS E NAVEGAÇÃO ---
         const configModal = document.getElementById('configModal');
-        const analysisModal = document.getElementById('analysisModal');
         const romaneioModal = document.getElementById('romaneioModal');
-        const configButton = document.getElementById('configButton');
-        const analyzeTableButton = document.getElementById('analyzeTableButton');
-        const romaneioButton = document.getElementById('romaneioButton');
-        const closeConfigButton = document.querySelector('.close-button');
-        const closeAnalysisButton = document.querySelector('.close-analysis-button');
+
         const closeRomaneioButton = document.querySelector('.close-romaneio-button');
         const printRomaneioButton = document.getElementById('printRomaneioButton');
 
-        configButton.onclick = () => configModal.style.display = 'flex';
-        closeConfigButton.onclick = () => {
-            configModal.style.display = 'none';
-            resetRuleForm();
-            resetPartRuleForm();
-        };
-
-        analyzeTableButton.onclick = () => {
-            analyzeVisibleTable();
-            analysisModal.style.display = 'flex';
-        };
-        closeAnalysisButton.onclick = () => analysisModal.style.display = 'none';
-
-        romaneioButton.onclick = () => {
-            generateAndShowRomaneio();
-            romaneioModal.style.display = 'flex';
-        };
+        // Abertura e fechamento dos modais que não são views de tela cheia
         closeRomaneioButton.onclick = () => romaneioModal.style.display = 'none';
         printRomaneioButton.onclick = () => window.print();
 
         window.onclick = (event) => {
-            if (event.target == configModal) {
-                configModal.style.display = 'none';
-                resetRuleForm();
-                resetPartRuleForm();
-            }
-            if (event.target == analysisModal) analysisModal.style.display = 'none';
             if (event.target == romaneioModal) romaneioModal.style.display = 'none';
         };
 
-        // Adicione esta nova função após a seção de LÓGICA DOS MODAIS
+        // --- NAVEGAÇÃO ENTRE VIEWS ---
+        const mainContainer = document.querySelector('.app-container');
+        const configView = document.getElementById('configuration-view');
+        const clientsView = document.getElementById('production-dashboard-view');
+        const itemView = document.getElementById('production-item-view');
+
+        function showMainView() {
+            mainContainer.style.display = 'block';
+            configView.style.display = 'none';
+            clientsView.style.display = 'none';
+            itemView.style.display = 'none';
+            feather.replace();
+        }
+
+        function showConfigView() {
+            mainContainer.style.display = 'none';
+            configView.style.display = 'block';
+            clientsView.style.display = 'none';
+            itemView.style.display = 'none';
+            loadConfigForms('romaneio'); // Carrega as regras de romaneio por padrão
+            feather.replace();
+        }
+
+        function showClientsView() {
+            mainContainer.style.display = 'none';
+            configView.style.display = 'none';
+            clientsView.style.display = 'block';
+            itemView.style.display = 'none';
+            // A lógica de carregar clientes já está em showClientsDashboard
+            showClientsDashboard();
+            feather.replace();
+        }
+
+        // --- LÓGICA DA TELA DE CONFIGURAÇÕES ---
+        const configFormsContainer = document.getElementById('config-forms-container');
+        const configModalContent = document.querySelector('#configModal .modal__content');
+        configFormsContainer.appendChild(configModalContent); // Move o conteúdo do modal para a nova view
+
+        const configModeRomaneioBtn = document.getElementById('config-mode-romaneio');
+        const configModeProducaoBtn = document.getElementById('config-mode-producao');
+
+        function loadConfigForms(mode) {
+            // Desconecta listeners antigos
+            if (rulesRef) rulesRef.off();
+            if (rulesPartRef) rulesPartRef.off();
+
+            if (mode === 'romaneio') {
+                rulesRef = database.ref('dados/romaneio');
+                rulesPartRef = database.ref('dados/romaneioPecas');
+                configModeRomaneioBtn.style.backgroundColor = 'var(--color-accent-secondary)';
+                configModeProducaoBtn.style.backgroundColor = 'var(--color-text-light)';
+            } else { // producao
+                rulesRef = database.ref('dados/producao');
+                rulesPartRef = database.ref('dados/producaoPecas');
+                configModeRomaneioBtn.style.backgroundColor = 'var(--color-text-light)';
+                configModeProducaoBtn.style.backgroundColor = 'var(--color-accent-secondary)';
+            }
+
+            attachFirebaseListeners(); // Reutiliza a função que carrega as regras
+        }
+
+        configModeRomaneioBtn.addEventListener('click', () => loadConfigForms('romaneio'));
+        configModeProducaoBtn.addEventListener('click', () => loadConfigForms('producao'));
 
         function attachFirebaseListeners() {
             // --- SINCRONIZAÇÃO COM FIREBASE (REGRAS DE CÓDIGO) ---
@@ -1184,40 +1209,6 @@
                     applyRulesToVisibleTable();
                 }
             });
-        }
-
-        function updateMode() {
-            // Desconecta listeners antigos para evitar chamadas duplicadas
-            if (rulesRef) rulesRef.off();
-            if (rulesPartRef) rulesPartRef.off();
-
-            const isProducao = document.getElementById('modeToggle').checked;
-            currentMode = isProducao ? 'producao' : 'romaneio';
-
-            const romaneioBtn = document.getElementById('romaneioButton');
-            // NOVAS LINHAS ABAIXO
-            const saveClientBtn = document.getElementById('saveClientButton');
-            const viewDashboardBtn = document.getElementById('viewProductionListButton');
-
-            if (isProducao) {
-                rulesRef = database.ref('dados/producao');
-                rulesPartRef = database.ref('dados/producaoPecas');
-                romaneioBtn.innerHTML = '<i data-feather="file-text"></i><span>Gerar Produção</span>';
-                viewDashboardBtn.style.display = 'inline-flex';
-                // O botão de salvar só aparece se uma planilha estiver carregada
-                saveClientBtn.style.display = fullSpreadsheetData.length > 0 ? 'inline-flex' : 'none';
-            } else {
-                rulesRef = database.ref('dados/romaneio');
-                rulesPartRef = database.ref('dados/romaneioPecas');
-                romaneioBtn.innerHTML = '<i data-feather="file-text"></i><span>Gerar Romaneio</span>';
-                viewDashboardBtn.style.display = 'none';
-                saveClientBtn.style.display = 'none';
-            }
-
-            // Reconecta os listeners para os novos caminhos do Firebase
-            attachFirebaseListeners();
-            // Atualiza os ícones que foram recriados
-            feather.replace();
         }
 
         // --- LÓGICA DE GERENCIAMENTO DE REGRAS (GERAL) ---
@@ -1587,72 +1578,71 @@
             });
         }
 
-        // --- FUNÇÃO 3: ANALISA A TABELA VISÍVEL E MOSTRA O RESULTADO ---
-        function analyzeVisibleTable() {
-            const analysisResultContainer = document.getElementById('analysisResult');
-            analysisResultContainer.innerHTML = '';
 
-            const table = document.querySelector('#table-container table');
-            if (!table) {
-                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Nenhuma tabela para analisar.</p>';
-                return;
-            }
-            if (codeColumnIndex === -1) {
-                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Não foi possível identificar a coluna de código.</p>';
-                return;
-            }
-
-            const dataRows = Array.from(table.querySelectorAll('tbody tr'));
-            if (dataRows.length === 0) {
-                analysisResultContainer.innerHTML = '<p>A tabela não contém dados para analisar.</p>';
-                return;
-            }
-
-            dataRows.forEach((row, rowIndex) => {
-                const codeCell = row.cells[codeColumnIndex];
-                const checklistCell = row.cells[row.cells.length - 1];
-                const hasChecklist = checklistCell && checklistCell.querySelector('.checklist-container');
-                const itemCode = codeCell ? codeCell.textContent : 'N/A';
-
-                const resultEl = document.createElement('p');
-                resultEl.className = 'analysis-result__item';
-
-                if (hasChecklist) {
-                    resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): TEM CHECKLIST`;
-                    resultEl.classList.add('analysis-result__item--success');
-                } else {
-                    resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): NÃO TEM CHECKLIST`;
-                     resultEl.classList.add('analysis-result__item--fail');
+        // --- FUNÇÃO 5: GERAÇÃO DE DOCUMENTO CENTRALIZADA ---
+        async function generateDocument(clientId, mode) {
+            try {
+                // 1. Buscar dados do cliente
+                const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
+                const clientData = clientSnapshot.val();
+                if (!clientData) {
+                    alert('Erro: Cliente não encontrado.');
+                    return;
                 }
-                analysisResultContainer.appendChild(resultEl);
-            });
+
+                // 2. Buscar as regras corretas (código e peças)
+                const rulesPath = (mode === 'producao') ? 'dados/producao' : 'dados/romaneio';
+                const partRulesPath = (mode === 'producao') ? 'dados/producaoPecas' : 'dados/romaneioPecas';
+
+                const rulesSnapshot = await database.ref(rulesPath).once('value');
+                const partRulesSnapshot = await database.ref(partRulesPath).once('value');
+
+                const loadedRules = [];
+                const rulesData = rulesSnapshot.val();
+                if (rulesData) {
+                    for (const key in rulesData) loadedRules.push({ id: key, ...rulesData[key] });
+                }
+
+                const loadedPartRules = [];
+                const partRulesData = partRulesSnapshot.val();
+                if (partRulesData) {
+                    for (const key in partRulesData) loadedPartRules.push({ id: key, ...partRulesData[key] });
+                }
+
+                // 3. Chamar a lógica de renderização
+                renderDocument(clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
+
+            } catch (error) {
+                console.error("Erro ao gerar documento:", error);
+                alert("Ocorreu um erro ao gerar o documento.");
+            }
         }
 
-        // --- FUNÇÃO 4: GERA E MOSTRA O ROMANEIO ---
-        function generateAndShowRomaneio() {
+        function renderDocument(spreadsheetData, documentRules, documentPartRules, mode) {
             const romaneioHeaderContainer = document.getElementById('romaneio-header');
             const romaneioItemsContainer = document.getElementById('romaneio-items');
             romaneioHeaderContainer.innerHTML = '';
             romaneioItemsContainer.innerHTML = '';
 
-            if (fullSpreadsheetData.length === 0 || tableHeaderRowIndex === -1) {
-                romaneioItemsContainer.innerHTML = '<p>Carregue uma planilha primeiro.</p>';
+            const localTableHeaderRowIndex = spreadsheetData.findIndex(row => row && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+            if (localTableHeaderRowIndex === -1) {
+                romaneioItemsContainer.innerHTML = '<p>Erro: Cabeçalho não encontrado nos dados do cliente.</p>';
+                romaneioModal.style.display = 'flex';
                 return;
             }
+            const localCodeColumnIndex = spreadsheetData[localTableHeaderRowIndex].findIndex(cell => String(cell).toUpperCase().includes('CÓDIGO'));
 
-            const spreadsheetHeaderData = fullSpreadsheetData.slice(0, tableHeaderRowIndex);
+            const spreadsheetHeaderData = spreadsheetData.slice(0, localTableHeaderRowIndex);
             spreadsheetHeaderData.forEach(row => {
                 const rowString = row.join('').toUpperCase();
                 if (rowString.includes('OBRA:') || rowString.includes('PREVISÃO DE ENTREGA:') || rowString.includes('VENDEDOR:')) {
                     return;
                 }
-
                 const filteredCells = row.filter(cell => cell !== null && String(cell).trim() !== '');
                 if (filteredCells.length > 0) {
                     const p = document.createElement('p');
                     if (String(filteredCells[0]).toLowerCase().includes('planilha de itens')) {
-                        // LINHA MODIFICADA ABAIXO
-                        const title = currentMode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
+                        const title = mode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
                         p.innerHTML = `<strong>${title}</strong>`;
                     } else {
                          p.innerHTML = filteredCells.map(cell => `<span>${cell}</span>`).join('<span style="margin: 0 1rem;">|</span>');
@@ -1661,13 +1651,14 @@
                 }
             });
 
-            const tableData = fullSpreadsheetData.slice(tableHeaderRowIndex + 1);
-            const tableHeader = fullSpreadsheetData[tableHeaderRowIndex];
+            const tableData = spreadsheetData.slice(localTableHeaderRowIndex + 1);
+            const tableHeader = spreadsheetData[localTableHeaderRowIndex];
             const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
             const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
 
             tableData.forEach((rowData, index) => {
-                const itemCode = String(rowData[codeColumnIndex] || '').trim().toUpperCase();
+                if (!rowData || !rowData[localCodeColumnIndex]) return;
+                const itemCode = String(rowData[localCodeColumnIndex] || '').trim().toUpperCase();
                 if (!itemCode) return;
 
                 const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
@@ -1675,15 +1666,14 @@
                 const itemPos = String(rowData[0] || index + 1);
 
                 let combinedChecklist = [];
-
-                const applicablePartRules = partRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
+                const applicablePartRules = documentPartRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
                 if(applicablePartRules.length > 0) {
                     applicablePartRules.forEach(rule => {
                         rule.checklist.forEach(item => combinedChecklist.push({ text: item.text, quantity: item.quantity, symbol: item.symbol }));
                     });
                 }
 
-                const applicableRules = rules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
+                const applicableRules = documentRules.filter(rule => itemCode.includes((rule.codigo || '').toUpperCase()));
                 if(applicableRules.length > 0) {
                     applicableRules.forEach(rule => {
                         rule.checklist.forEach(item => {
@@ -1698,7 +1688,6 @@
 
                 const itemCard = document.createElement('div');
                 itemCard.className = 'romaneio-item';
-
                 let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist de Conferência</h4>`;
                 if (combinedChecklist.length > 0) {
                     combinedChecklist.forEach(checkItem => {
@@ -1770,6 +1759,8 @@
                 </div>
             `;
             romaneioItemsContainer.appendChild(signatureSection);
+
+            romaneioModal.style.display = 'flex';
         }
 
         // --- NOVAS FUNÇÕES DE PRODUÇÃO ---
@@ -1824,7 +1815,7 @@
             });
     }
 
-    function showProductionDashboard() {
+    function showClientsDashboard() {
         document.querySelector('.app-container').style.display = 'none';
         const dashboardView = document.getElementById('production-dashboard-view');
         dashboardView.style.display = 'block';
@@ -1847,14 +1838,15 @@
                     const client = clients[clientId];
                     const row = document.createElement('tr');
 
-                    // --- HTML CORRETO COM OS DOIS BOTÕES ---
                     row.innerHTML = `
                         <td class="data-table__td">${client.name}</td>
                         <td class="data-table__td">
-                            <div style="display: flex; gap: 0.5rem;">
+                            <div style="display: flex; gap: 0.5rem; justify-content: flex-start;">
                                 <button class="btn btn--primary" onclick="showProductionItemView('${clientId}')">Ver Ordem</button>
-                                <button class="btn btn--secondary" title="Compartilhar Link" onclick="shareOrderLink('${clientId}')">
-                                    <i data-feather="share-2" style="width: 16px; height: 16px;"></i>
+                                <button class="btn btn--success" onclick="generateDocument('${clientId}', 'producao')">Produção</button>
+                                <button class="btn btn--secondary" onclick="generateDocument('${clientId}', 'romaneio')">Romaneio</button>
+                                <button class="btn btn--warning btn--icon" title="Compartilhar Link" onclick="shareOrderLink('${clientId}')">
+                                    <i data-feather="share-2"></i>
                                 </button>
                             </div>
                         </td>
@@ -1869,28 +1861,52 @@
         });
     }
 
-        function showProductionItemView(clientId) {
+        async function showProductionItemView(clientId) {
             document.getElementById('production-dashboard-view').style.display = 'none';
             const itemView = document.getElementById('production-item-view');
             itemView.style.display = 'block';
             itemView.innerHTML = '<h2>Carregando dados da ordem...</h2>';
 
-            const clientRef = database.ref(`dados/producao_clientes/${clientId}`);
-            clientRef.once('value', snapshot => {
-                const clientData = snapshot.val();
+            try {
+                // Fetch all data concurrently for performance
+                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
+                    database.ref('dados/producao').once('value'), // Always use production rules
+                    database.ref('dados/producaoPecas').once('value')
+                ]);
+
+                const clientData = clientSnapshot.val();
                 if (!clientData) {
                     itemView.innerHTML = '<h2>Erro: Cliente não encontrado.</h2>';
                     return;
                 }
 
-                // Reutiliza a lógica de `generateAndShowRomaneio` para renderizar a base
+                const itemRules = [];
+                const rulesData = rulesSnapshot.val();
+                if (rulesData) {
+                    for (const key in rulesData) itemRules.push({ id: key, ...rulesData[key] });
+                }
+
+                const itemPartRules = [];
+                const partRulesData = partRulesSnapshot.val();
+                if (partRulesData) {
+                    for (const key in partRulesData) itemPartRules.push({ id: key, ...partRulesData[key] });
+                }
+
+                // --- Start Rendering Logic ---
                 const localTableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
                 const localCodeColumnIndex = clientData.spreadsheetData[localTableHeaderRowIndex].findIndex(cell => String(cell).toUpperCase().includes('CÓDIGO'));
                 const tableHeader = clientData.spreadsheetData[localTableHeaderRowIndex];
                 const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
                 const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
 
-                let contentHTML = `<h2 class="production-view__title">Acompanhamento: ${clientData.name}</h2>`;
+                let contentHTML = `
+                    <button class="btn btn--primary" style="margin-bottom: 2rem; max-width: 200px;" onclick="showClientsView()">
+                        <i data-feather="arrow-left"></i>
+                        <span>Voltar</span>
+                    </button>
+                    <h2 class="production-view__title">Acompanhamento: ${clientData.name}</h2>
+                `;
 
                 const tableData = clientData.spreadsheetData.slice(localTableHeaderRowIndex + 1);
                 tableData.forEach((rowData, index) => {
@@ -1915,8 +1931,8 @@
                     }
 
                     let combinedChecklist = [];
-                    partRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
-                    rules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(typeof i === 'string' ? {text: i} : i)));
+                    itemPartRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
+                    itemRules.filter(r => itemCode.includes((r.codigo || '').toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(typeof i === 'string' ? {text: i} : i)));
 
                     let checklistHTML = `<h4 class="conference-item__checklist-title">Checklist Interativo</h4>`;
                     if(combinedChecklist.length > 0) {
@@ -1938,24 +1954,17 @@
 
                     contentHTML += `
                         <div class="conference-item">
-
-                            <div class="conference-item__image-wrapper">
-                                ${imageHTML}
-                            </div>
-
+                            <div class="conference-item__image-wrapper">${imageHTML}</div>
                             <div class="conference-item__info">
                                 <p class="conference-item__pos">Pos. ${itemPos}</p>
                                 <p class="conference-item__code">${itemCode}</p>
                                 <p class="conference-item__desc">${itemDesc}</p>
                                 ${itemTipo ? `<p class="conference-item__tipo">${itemTipo}</p>` : ''}
                             </div>
-
                             <div class="conference-item__checklist">${checklistHTML}</div>
-
                         </div>
                     `;
 
-                    // Após renderizar o HTML, busca os estados salvos
                     const statusRef = database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`);
                     statusRef.on('value', statusSnapshot => {
                         const statuses = statusSnapshot.val();
@@ -1972,7 +1981,11 @@
                 });
 
                 itemView.innerHTML = contentHTML;
-            });
+                feather.replace(); // Render icons for back button
+            } catch (error) {
+                console.error("Erro ao carregar item de produção:", error);
+                itemView.innerHTML = '<h2>Ocorreu um erro ao carregar os dados da ordem.</h2>';
+            }
         }
 
         function updateChecklistStatus(clientId, itemPos, itemText, isChecked) {
@@ -1986,12 +1999,14 @@
         document.getElementById('fileInput').addEventListener('change', function(event) {
             const file = event.target.files[0];
             const statusEl = document.getElementById('status');
+            const saveClientBtn = document.getElementById('saveClientButton');
 
             if (!file) {
                 statusEl.textContent = 'Nenhum arquivo selecionado.';
                 document.getElementById('table-container').innerHTML = '';
                 document.getElementById('spreadsheet-header-container').innerHTML = '';
                 fullSpreadsheetData = [];
+                saveClientBtn.style.display = 'none';
                 return;
             }
             statusEl.textContent = `Processando "${file.name}"...`;
@@ -2009,9 +2024,7 @@
                     applyRulesToVisibleTable();
 
                     statusEl.textContent = `Exibindo dados de "${file.name}".`;
-                    if (currentMode === 'producao') {
-                        document.getElementById('saveClientButton').style.display = 'inline-flex';
-                    }
+                    saveClientBtn.style.display = 'inline-flex';
                 } catch (error) {
                     console.error("Erro ao processar o arquivo:", error);
                     statusEl.textContent = 'Ocorreu um erro ao ler o arquivo.';
@@ -2020,17 +2033,17 @@
             reader.readAsBinaryString(file);
         });
 
-        // --- INICIALIZA O SISTEMA ---
-        document.getElementById('modeToggle').addEventListener('change', updateMode);
-        // NOVOS LISTENERS
+        // --- INICIALIZAÇÃO DO SISTEMA ---
+        document.getElementById('configButton').onclick = showConfigView;
+        document.getElementById('accessClientsButton').addEventListener('click', showClientsView);
+        document.getElementById('backToMainView').addEventListener('click', showMainView);
         document.getElementById('saveClientButton').addEventListener('click', saveClientForProduction);
-        document.getElementById('viewProductionListButton').addEventListener('click', showProductionDashboard);
 
         // Configuração inicial ao carregar a página
-        updateMode();
+        showMainView();
         resetRuleForm();
         resetPartRuleForm();
-        feather.replace(); // Garante que todos os ícones sejam renderizados
+        feather.replace();
 
     // Função para copiar o link para a área de transferência
     function shareOrderLink(clientId) {
@@ -2050,17 +2063,6 @@
         if (window.location.hash && window.location.hash.startsWith('#order=')) {
             const clientId = window.location.hash.substring(7);
             if (clientId) {
-                // --- INÍCIO DA CORREÇÃO CRÍTICA ---
-                // Força o sistema para o modo "Produção" antes de exibir a tela.
-
-                // 1. Marca o interruptor visual para a posição "Produção".
-                document.getElementById('modeToggle').checked = true;
-
-                // 2. Chama a função que atualiza os caminhos do Firebase para buscar as regras de Produção.
-                updateMode();
-                // --- FIM DA CORREÇÃO CRÍTICA ---
-
-                // 3. Agora, com os dados corretos carregados, exibe a tela.
                 showProductionItemView(clientId);
             }
         }
