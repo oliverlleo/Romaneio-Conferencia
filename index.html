@@ -78,6 +78,10 @@
         .rule-item__actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
         .rule-item__code { font-weight: 600; }
         .rule-item__checklist { list-style-position: inside; padding-left: 0.5rem; color: var(--color-text-light); font-size: 0.9rem; }
+        .analysis-result { background-color: var(--color-bg); padding: 1rem; max-height: 60vh; overflow-y: auto; border-radius: 6px; }
+        .analysis-result__item { padding: 0.5rem 1rem; margin-bottom: 0.5rem; border-radius: 4px; }
+        .analysis-result__item--success { background-color: #D1FAE5; color: #065F46; }
+        .analysis-result__item--fail { background-color: #FEE2E2; color: #991B1B; }
         .romaneio-page { flex-grow: 1; overflow-y: auto; background-color: var(--color-panel-bg); padding: 2rem; }
         .romaneio-header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--color-text); }
         .romaneio-header p { margin-bottom: 0.25rem; }
@@ -124,12 +128,16 @@
             <label for="fileInput" class="btn btn--primary"><i data-feather="file-plus"></i> <span>Selecionar Planilha</span></label>
             <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls, .csv">
             <button id="configButton" class="btn btn--secondary"><i data-feather="settings"></i> <span>Configurações</span></button>
+            <button id="analyzeTableButton" class="btn btn--warning"><i data-feather="bar-chart-2"></i> <span>Analisar Tabela</span></button>
             <button id="accessClientsButton" class="btn btn--primary"><i data-feather="users"></i> <span>Acessar Clientes</span></button>
             <button id="saveClientButton" class="btn btn--success" style="display: none;"><i data-feather="save"></i> <span>Salvar Cliente</span></button>
         </div>
         <p id="status" class="status-text">Nenhum arquivo selecionado.</p>
         <div id="spreadsheet-header-container" class="spreadsheet-header"></div>
-        <div id="table-container" class="table-wrapper"></div>
+        <div id="table-container" class="table-wrapper">
+             <!-- A tabela da planilha carregada aparece aqui -->
+        </div>
+        <textarea id="observation-notes" class="form-textarea" rows="4" placeholder="Adicione observações para o relatório final aqui..." style="margin-top: 1rem;"></textarea>
     </main>
 
     <!-- VIEWS DE TELA CHEIA -->
@@ -157,53 +165,55 @@
         <!-- Conteúdo do checklist interativo será injetado aqui -->
     </div>
 
-    <div id="configuration-view" class="view">
-        <div class="view__content">
-            <h2 class="view__title">Configurações</h2>
+    <!-- MODAL DE CONFIGURAÇÕES (LÓGICA ORIGINAL RESTAURADA) -->
+    <div id="configModal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2 class="modal__title">Gerenciar Regras</h2>
             <div class="action-bar" style="margin-bottom: 2rem;">
                 <button id="config-mode-romaneio" class="btn btn--secondary">Regras de Romaneio</button>
                 <button id="config-mode-producao" class="btn btn--secondary">Regras de Produção</button>
             </div>
-            <div id="config-forms-container">
-                <!-- Conteúdo dos formulários será injetado aqui -->
+            
+            <div id="rule-form-section" class="modal__section">
+                <h3 id="rule-form-title" class="modal__subtitle">Regras de Código</h3>
+                <div class="form-grid">
+                    <input type="hidden" id="ruleId">
+                    <input type="text" id="ruleCode" placeholder="Se o código CONTÉM..." class="form-input">
+                    <div id="newChecklistContainer"></div>
+                    <button id="addChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item</button>
+                    <button id="saveRule" class="btn btn--success">Salvar Regra de Código</button>
+                    <button id="cancelEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+                </div>
             </div>
-             <button class="btn btn--primary" style="margin-top: 2rem; max-width: 200px;" onclick="showMainView()">
-                <i data-feather="arrow-left"></i> <span>Voltar</span>
-            </button>
+            <div class="modal__section">
+                <h3 class="modal__subtitle">Regras de Código Salvas</h3>
+                <div id="rulesList" class="rules-list"></div>
+            </div>
+            <div id="part-rule-form-section" class="modal__section">
+                <h3 id="part-rule-form-title" class="modal__subtitle">Regras de Peça</h3>
+                <div class="form-grid">
+                    <input type="hidden" id="partRuleId">
+                    <input type="text" id="partRuleCode" placeholder="Se o código CONTÉM..." class="form-input">
+                    <div id="newPartChecklistContainer"></div>
+                    <button id="addPartChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item de peça</button>
+                    <button id="savePartRule" class="btn btn--success">Salvar Regra de Peça</button>
+                    <button id="cancelPartEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+                </div>
+            </div>
+             <div class="modal__section">
+                <h3 class="modal__subtitle">Regras de Peça Salvas</h3>
+                <div id="partRulesList" class="rules-list"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Container oculto para os formulários de regras (preserva a lógica original) -->
-    <div id="config-forms-source" style="display: none;">
-        <div id="rule-form-section" class="modal__section">
-            <h3 id="rule-form-title" class="modal__subtitle">Regras de Código</h3>
-            <div class="form-grid">
-                <input type="hidden" id="ruleId">
-                <input type="text" id="ruleCode" placeholder="Se o código CONTÉM..." class="form-input">
-                <div id="newChecklistContainer"></div>
-                <button id="addChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item</button>
-                <button id="saveRule" class="btn btn--success">Salvar Regra de Código</button>
-                <button id="cancelEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
-            </div>
-        </div>
-        <div class="modal__section">
-            <h3 class="modal__subtitle">Regras de Código Salvas</h3>
-            <div id="rulesList" class="rules-list"></div>
-        </div>
-        <div id="part-rule-form-section" class="modal__section">
-            <h3 id="part-rule-form-title" class="modal__subtitle">Regras de Peça</h3>
-            <div class="form-grid">
-                <input type="hidden" id="partRuleId">
-                <input type="text" id="partRuleCode" placeholder="Se o código CONTÉM..." class="form-input">
-                <div id="newPartChecklistContainer"></div>
-                <button id="addPartChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item de peça</button>
-                <button id="savePartRule" class="btn btn--success">Salvar Regra de Peça</button>
-                <button id="cancelPartEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
-            </div>
-        </div>
-         <div class="modal__section">
-            <h3 class="modal__subtitle">Regras de Peça Salvas</h3>
-            <div id="partRulesList" class="rules-list"></div>
+    <!-- MODAL DE ANÁLISE -->
+    <div id="analysisModal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2 class="modal__title">Resultado da Análise</h2>
+            <div id="analysisResult" class="analysis-result"></div>
         </div>
     </div>
 
@@ -234,56 +244,44 @@
         let rules = [];
         let partRules = [];
 
-        // --- CONTROLE DE NAVEGAÇÃO (VIEWS) ---
+        // --- CONTROLE DE NAVEGAÇÃO E MODAIS ---
         const mainContainer = document.querySelector('.app-container');
         const clientsView = document.getElementById('clients-view');
-        const configView = document.getElementById('configuration-view');
         const itemView = document.getElementById('production-item-view');
+        const configModal = document.getElementById('configModal');
+        const analysisModal = document.getElementById('analysisModal');
 
         function showMainView() {
             mainContainer.style.display = 'block';
             clientsView.style.display = 'none';
-            configView.style.display = 'none';
             itemView.style.display = 'none';
         }
         function showClientsView() {
             mainContainer.style.display = 'none';
             clientsView.style.display = 'block';
-            configView.style.display = 'none';
             itemView.style.display = 'none';
             loadClientsList();
         }
-        function showConfigView() {
-            mainContainer.style.display = 'none';
-            clientsView.style.display = 'none';
-            configView.style.display = 'block';
-            itemView.style.display = 'none';
-            // Garante que o conteúdo seja movido apenas uma vez para a view de configuração
-            if (!document.getElementById('config-forms-container').hasChildNodes()) {
-                const source = document.getElementById('config-forms-source');
-                const container = document.getElementById('config-forms-container');
-                while (source.firstChild) {
-                    container.appendChild(source.firstChild);
-                }
-                // Re-associa os listeners dos botões que foram movidos
-                document.getElementById('addChecklistItem').addEventListener('click', () => addChecklistItemInput('newChecklistContainer'));
-                document.getElementById('addPartChecklistItem').addEventListener('click', () => addChecklistItemInput('newPartChecklistContainer', {}, 'part'));
-                document.getElementById('saveRule').addEventListener('click', saveRule);
-                document.getElementById('savePartRule').addEventListener('click', savePartRule);
-                document.getElementById('cancelEdit').addEventListener('click', resetRuleForm);
-                document.getElementById('cancelPartEdit').addEventListener('click', resetPartRuleForm);
-            }
+        
+        function showConfigModal() {
+            configModal.style.display = 'flex';
             loadConfigForms('romaneio');
         }
-        document.getElementById('configButton').onclick = showConfigView;
+        
+        function showAnalysisModal() {
+            analysisModal.style.display = 'flex';
+            analyzeCurrentTable();
+        }
+
+        document.getElementById('configButton').onclick = showConfigModal;
         document.getElementById('accessClientsButton').onclick = showClientsView;
+        document.getElementById('analyzeTableButton').onclick = showAnalysisModal;
         
         // --- LÓGICA DA TELA DE CONFIGURAÇÃO (FUNCIONAL E COMPLETA) ---
         function loadConfigForms(mode) {
             const romaneioBtn = document.getElementById('config-mode-romaneio');
             const producaoBtn = document.getElementById('config-mode-producao');
             
-            // CORREÇÃO CRÍTICA: Desconecta listeners antigos para evitar mistura de dados
             if (rulesRef) rulesRef.off();
             if (rulesPartRef) rulesPartRef.off();
             
@@ -448,6 +446,14 @@
             container.appendChild(wrapper);
             feather.replace();
         };
+        
+        document.getElementById('addChecklistItem').addEventListener('click', () => addChecklistItemInput('newChecklistContainer'));
+        document.getElementById('addPartChecklistItem').addEventListener('click', () => addChecklistItemInput('newPartChecklistContainer', {}, 'part'));
+        document.getElementById('saveRule').addEventListener('click', saveRule);
+        document.getElementById('savePartRule').addEventListener('click', savePartRule);
+        document.getElementById('cancelEdit').addEventListener('click', resetRuleForm);
+        document.getElementById('cancelPartEdit').addEventListener('click', resetPartRuleForm);
+
 
         // --- LÓGICA DE PROCESSAMENTO DE PLANILHA (RESTAURADA E COMPLETA) ---
         document.getElementById('fileInput').addEventListener('change', (event) => {
@@ -667,6 +673,17 @@
                     <div class="romaneio-item__checklist">${checklistHTML}</div>`;
                 romaneioItemsContainer.appendChild(itemCard);
             });
+            
+            const observationNotes = document.getElementById('observation-notes');
+            if (observationNotes && observationNotes.value.trim() !== '') {
+                const observationSection = document.createElement('div');
+                observationSection.className = 'romaneio-observations';
+                observationSection.innerHTML = `
+                    <h4 class="romaneio-item__checklist-title">Observações</h4>
+                    <p style="white-space: pre-wrap;">${observationNotes.value}</p>
+                `;
+                romaneioItemsContainer.appendChild(observationSection);
+            }
 
             const signatureSection = document.createElement('div');
             signatureSection.className = 'romaneio-signatures';
@@ -677,14 +694,30 @@
         }
         
         // --- LÓGICA DO CHECKLIST INTERATIVO "VER ORDEM" (RESTAURADA) ---
-        function showProductionItemView(clientId) {
-            showMainView(); // Esconde as outras
+        async function showProductionItemView(clientId) {
             itemView.style.display = 'block';
+            mainContainer.style.display = 'none';
+            clientsView.style.display = 'none';
+            
             itemView.innerHTML = '<div class="view__content"><h2>Carregando dados da ordem...</h2></div>';
 
-            database.ref(`dados/producao_clientes/${clientId}`).once('value', snapshot => {
-                const clientData = snapshot.val();
+            try {
+                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
+                    database.ref('dados/producao').once('value'),
+                    database.ref('dados/producaoPecas').once('value')
+                ]);
+
+                const clientData = clientSnapshot.val();
                 if (!clientData) { itemView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
+
+                const productionRules = [];
+                const rulesData = rulesSnapshot.val();
+                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => productionRules.push({id, ...data}));
+
+                const productionPartRules = [];
+                const partRulesData = partRulesSnapshot.val();
+                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
 
                 let contentHTML = `<div class="view__content">
                                     <h2 class="view__title">Acompanhamento: ${clientData.name}</h2>
@@ -714,14 +747,14 @@
                     }
 
                     let combinedChecklist = [];
-                    // Usa as regras globais que já foram carregadas pelo listener de produção
-                    partRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
-                    rules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
+                    productionPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
+                    productionRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
 
                     let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist Interativo</h4>`;
                     if(combinedChecklist.length > 0) {
                         combinedChecklist.forEach((checkItem, checkIndex) => {
-                            const checkId = `check-${clientId}-${itemPos}-${checkIndex}`;
+                            const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
+                            const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
                             checklistHTML += `
                                 <div class="interactive-checklist-item">
                                     <label for="${checkId}">
@@ -746,29 +779,115 @@
                 itemView.innerHTML = contentHTML;
                 feather.replace();
                 
-                // Carrega o estado dos checkboxes após renderizar
                 database.ref(`dados/producao_checklist_status/${clientId}`).on('value', statusSnapshot => {
                     const statuses = statusSnapshot.val();
                     if(statuses) {
                         Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
                             Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                // Encontra o checkbox correspondente
-                                const inputs = document.querySelectorAll(`input[onchange*="'${itemPos}'"][onchange*="'${itemText.replace(/'/g, "\\'")}"]`);
-                                if(inputs.length > 0) {
-                                    inputs[0].checked = isChecked;
+                                const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
+                                // Precisa reconstruir o combinedChecklist para encontrar o checkIndex
+                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
+                                if(itemRow) {
+                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
+                                    let tempCombinedChecklist = [];
+                                    productionPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push(i)));
+                                    productionRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push({ ...i, quantity: 1 })));
+                                    
+                                    const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
+                                    if(checkIndex !== -1) {
+                                        const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                        const checkbox = document.getElementById(checkId);
+                                        if (checkbox) {
+                                            checkbox.checked = isChecked;
+                                        }
+                                    }
                                 }
                             });
                         });
                     }
                 });
-            });
+            } catch (error) {
+                console.error("Erro ao carregar ordem:", error);
+                itemView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar a ordem.</h2></div>';
+            }
         }
         function updateChecklistStatus(clientId, itemPos, itemText, isChecked) {
             database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
+        
+        // --- LÓGICA DE ANÁLISE DE TABELA (RESTAURADA) ---
+        async function analyzeCurrentTable() {
+            const analysisResultContainer = document.getElementById('analysisResult');
+            analysisResultContainer.innerHTML = 'Analisando...';
+        
+            const table = document.querySelector('#table-container table');
+            if (!table || fullSpreadsheetData.length === 0) {
+                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Nenhuma tabela para analisar. Carregue uma planilha primeiro.</p>';
+                return;
+            }
+        
+            try {
+                const [rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref('dados/producao').once('value'),
+                    database.ref('dados/producaoPecas').once('value')
+                ]);
+        
+                const analysisRules = [];
+                if(rulesSnapshot.val()) Object.values(rulesSnapshot.val()).forEach(data => analysisRules.push(data));
+        
+                const analysisPartRules = [];
+                if(partRulesSnapshot.val()) Object.values(partRulesSnapshot.val()).forEach(data => analysisPartRules.push(data));
+        
+                const headerRow = table.querySelector('thead tr');
+                const codeColIndex = Array.from(headerRow.cells).findIndex(th => th.textContent.toUpperCase().includes('CÓDIGO'));
+        
+                if (codeColIndex === -1) {
+                    analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Coluna "CÓDIGO" não encontrada na tabela.</p>';
+                    return;
+                }
+        
+                analysisResultContainer.innerHTML = ''; 
+                const dataRows = Array.from(table.querySelectorAll('tbody tr'));
+        
+                dataRows.forEach((row, rowIndex) => {
+                    const codeCell = row.cells[codeColIndex];
+                    const itemCode = (codeCell.textContent || '').trim().toUpperCase();
+                    if (!itemCode) return;
+        
+                    const hasCodeRule = analysisRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
+                    const hasPartRule = analysisPartRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
+        
+                    const resultEl = document.createElement('p');
+                    resultEl.className = 'analysis-result__item';
+        
+                    if (hasCodeRule || hasPartRule) {
+                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): REGRA ENCONTRADA`;
+                        resultEl.classList.add('analysis-result__item--success');
+                    } else {
+                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): Nenhuma regra encontrada`;
+                        resultEl.classList.add('analysis-result__item--fail');
+                    }
+                    analysisResultContainer.appendChild(resultEl);
+                });
+        
+            } catch (error) {
+                console.error("Erro ao analisar tabela:", error);
+                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Ocorreu um erro durante a análise.</p>';
+            }
+        }
+
 
         // --- INICIALIZAÇÃO ---
-        showMainView();
+        window.addEventListener('load', () => {
+            if (window.location.hash && window.location.hash.startsWith('#order=')) {
+                const clientId = window.location.hash.substring(7);
+                if (clientId) {
+                    showProductionItemView(clientId);
+                }
+            } else {
+                 showMainView();
+            }
+        });
         feather.replace();
     </script>
 </body>
