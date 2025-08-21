@@ -78,6 +78,10 @@
         .rule-item__actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
         .rule-item__code { font-weight: 600; }
         .rule-item__checklist { list-style-position: inside; padding-left: 0.5rem; color: var(--color-text-light); font-size: 0.9rem; }
+        .analysis-result { background-color: var(--color-bg); padding: 1rem; max-height: 60vh; overflow-y: auto; border-radius: 6px; }
+        .analysis-result__item { padding: 0.5rem 1rem; margin-bottom: 0.5rem; border-radius: 4px; }
+        .analysis-result__item--success { background-color: #D1FAE5; color: #065F46; }
+        .analysis-result__item--fail { background-color: #FEE2E2; color: #991B1B; }
         .romaneio-page { flex-grow: 1; overflow-y: auto; background-color: var(--color-panel-bg); padding: 2rem; }
         .romaneio-header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--color-text); }
         .romaneio-header p { margin-bottom: 0.25rem; }
@@ -124,6 +128,7 @@
             <label for="fileInput" class="btn btn--primary"><i data-feather="file-plus"></i> <span>Selecionar Planilha</span></label>
             <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls, .csv">
             <button id="configButton" class="btn btn--secondary"><i data-feather="settings"></i> <span>Configurações</span></button>
+            <button id="analyzeTableButton" class="btn btn--warning"><i data-feather="bar-chart-2"></i> <span>Analisar Tabela</span></button>
             <button id="accessClientsButton" class="btn btn--primary"><i data-feather="users"></i> <span>Acessar Clientes</span></button>
             <button id="saveClientButton" class="btn btn--success" style="display: none;"><i data-feather="save"></i> <span>Salvar Cliente</span></button>
         </div>
@@ -203,6 +208,15 @@
         </div>
     </div>
 
+    <!-- MODAL DE ANÁLISE -->
+    <div id="analysisModal" class="modal">
+        <div class="modal__content">
+            <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <h2 class="modal__title">Resultado da Análise</h2>
+            <div id="analysisResult" class="analysis-result"></div>
+        </div>
+    </div>
+
     <!-- MODAL DE ROMANEIO -->
     <div id="romaneioModal" class="modal">
         <div class="modal__content modal__content--large">
@@ -235,6 +249,7 @@
         const clientsView = document.getElementById('clients-view');
         const itemView = document.getElementById('production-item-view');
         const configModal = document.getElementById('configModal');
+        const analysisModal = document.getElementById('analysisModal');
 
         function showMainView() {
             mainContainer.style.display = 'block';
@@ -248,13 +263,19 @@
             loadClientsList();
         }
         
-        // CORREÇÃO: Função para ABRIR o modal de configuração
         function showConfigModal() {
             configModal.style.display = 'flex';
-            loadConfigForms('romaneio'); // Inicia no modo romaneio por padrão
+            loadConfigForms('romaneio');
         }
+        
+        function showAnalysisModal() {
+            analysisModal.style.display = 'flex';
+            analyzeCurrentTable();
+        }
+
         document.getElementById('configButton').onclick = showConfigModal;
         document.getElementById('accessClientsButton').onclick = showClientsView;
+        document.getElementById('analyzeTableButton').onclick = showAnalysisModal;
         
         // --- LÓGICA DA TELA DE CONFIGURAÇÃO (FUNCIONAL E COMPLETA) ---
         function loadConfigForms(mode) {
@@ -426,7 +447,6 @@
             feather.replace();
         };
         
-        // Associa os listeners aos botões do modal uma única vez
         document.getElementById('addChecklistItem').addEventListener('click', () => addChecklistItemInput('newChecklistContainer'));
         document.getElementById('addPartChecklistItem').addEventListener('click', () => addChecklistItemInput('newPartChecklistContainer', {}, 'part'));
         document.getElementById('saveRule').addEventListener('click', saveRule);
@@ -682,7 +702,6 @@
             itemView.innerHTML = '<div class="view__content"><h2>Carregando dados da ordem...</h2></div>';
 
             try {
-                // CORREÇÃO: Busca as regras de produção ANTES de renderizar
                 const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
                     database.ref(`dados/producao_clientes/${clientId}`).once('value'),
                     database.ref('dados/producao').once('value'),
@@ -780,9 +799,80 @@
         function updateChecklistStatus(clientId, itemPos, itemText, isChecked) {
             database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
+        
+        // --- LÓGICA DE ANÁLISE DE TABELA (RESTAURADA) ---
+        async function analyzeCurrentTable() {
+            const analysisResultContainer = document.getElementById('analysisResult');
+            analysisResultContainer.innerHTML = 'Analisando...';
+        
+            const table = document.querySelector('#table-container table');
+            if (!table || fullSpreadsheetData.length === 0) {
+                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Nenhuma tabela para analisar. Carregue uma planilha primeiro.</p>';
+                return;
+            }
+        
+            try {
+                const [rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref('dados/producao').once('value'),
+                    database.ref('dados/producaoPecas').once('value')
+                ]);
+        
+                const analysisRules = [];
+                if(rulesSnapshot.val()) Object.values(rulesSnapshot.val()).forEach(data => analysisRules.push(data));
+        
+                const analysisPartRules = [];
+                if(partRulesSnapshot.val()) Object.values(partRulesSnapshot.val()).forEach(data => analysisPartRules.push(data));
+        
+                const headerRow = table.querySelector('thead tr');
+                const codeColIndex = Array.from(headerRow.cells).findIndex(th => th.textContent.toUpperCase().includes('CÓDIGO'));
+        
+                if (codeColIndex === -1) {
+                    analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Coluna "CÓDIGO" não encontrada na tabela.</p>';
+                    return;
+                }
+        
+                analysisResultContainer.innerHTML = ''; 
+                const dataRows = Array.from(table.querySelectorAll('tbody tr'));
+        
+                dataRows.forEach((row, rowIndex) => {
+                    const codeCell = row.cells[codeColIndex];
+                    const itemCode = (codeCell.textContent || '').trim().toUpperCase();
+                    if (!itemCode) return;
+        
+                    const hasCodeRule = analysisRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
+                    const hasPartRule = analysisPartRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
+        
+                    const resultEl = document.createElement('p');
+                    resultEl.className = 'analysis-result__item';
+        
+                    if (hasCodeRule || hasPartRule) {
+                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): REGRA ENCONTRADA`;
+                        resultEl.classList.add('analysis-result__item--success');
+                    } else {
+                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): Nenhuma regra encontrada`;
+                        resultEl.classList.add('analysis-result__item--fail');
+                    }
+                    analysisResultContainer.appendChild(resultEl);
+                });
+        
+            } catch (error) {
+                console.error("Erro ao analisar tabela:", error);
+                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Ocorreu um erro durante a análise.</p>';
+            }
+        }
+
 
         // --- INICIALIZAÇÃO ---
-        showMainView();
+        window.addEventListener('load', () => {
+            if (window.location.hash && window.location.hash.startsWith('#order=')) {
+                const clientId = window.location.hash.substring(7);
+                if (clientId) {
+                    showProductionItemView(clientId);
+                }
+            } else {
+                 showMainView();
+            }
+        });
         feather.replace();
     </script>
 </body>
