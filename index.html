@@ -104,7 +104,7 @@
         .romaneio-item__checkbox-group { display: flex; gap: 0.5rem; }
         .romaneio-item__checkbox-box { width: 20px; height: 20px; border: 2px solid var(--color-text-light); border-radius: 4px; flex-shrink: 0; }
         .romaneio-item__symbol { margin-right: 0.5rem; font-size: 1.2rem; line-height: 1; }
-        .romaneio-footer { padding: 1.5rem 2rem; background-color: var(--color-bg); }
+        .romaneio-footer { padding: 1.5rem 2rem; background-color: var(--color-bg); display: flex; gap: 1rem; justify-content: flex-end; }
         .romaneio-observations { border-top: 1px solid var(--color-border); padding-top: 1.5rem; margin-top: 1.5rem; }
         .romaneio-signatures { padding-top: 4rem; margin-top: 4rem; display: flex; justify-content: space-around; }
         .signature-line { text-align: center; }
@@ -123,7 +123,7 @@
         .interactive-checklist-item label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 1rem; }
         .interactive-checklist-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
         
-        /* --- NOVOS ESTILOS DO MODAL DE TRATAMENTO --- */
+        /* --- ESTILOS DO MODAL DE TRATAMENTO --- */
         .treatment-header {
             margin-bottom: 2rem;
             padding-bottom: 1.5rem;
@@ -213,7 +213,6 @@
             font-weight: 700;
         }
 
-        /* Melhorias na Tabela Principal */
         #treatmentResultTable {
             width: 100%;
             border-collapse: collapse;
@@ -292,7 +291,11 @@
     </div>
     
     <div id="production-item-view" class="view">
-        <!-- Conteúdo do checklist interativo será injetado aqui -->
+        <!-- Conteúdo do checklist interativo de produção será injetado aqui -->
+    </div>
+
+    <div id="romaneio-checklist-view" class="view">
+        <!-- Conteúdo do checklist interativo de romaneio será injetado aqui -->
     </div>
 
     <!-- MODAL DE CONFIGURAÇÕES -->
@@ -356,7 +359,7 @@
                 <div id="romaneio-items"></div>
             </div>
             <div class="romaneio-footer">
-                <button onclick="window.print()" class="btn btn--primary"><i data-feather="printer"></i><span>Imprimir</span></button>
+                <!-- Botões são adicionados dinamicamente via JS -->
             </div>
         </div>
     </div>
@@ -429,6 +432,7 @@
         const mainContainer = document.querySelector('.app-container');
         const clientsView = document.getElementById('clients-view');
         const itemView = document.getElementById('production-item-view');
+        const romaneioChecklistView = document.getElementById('romaneio-checklist-view');
         const configModal = document.getElementById('configModal');
         const analysisModal = document.getElementById('analysisModal');
         const treatmentModal = document.getElementById('treatmentModal');
@@ -437,11 +441,13 @@
             mainContainer.style.display = 'block';
             clientsView.style.display = 'none';
             itemView.style.display = 'none';
+            romaneioChecklistView.style.display = 'none';
         }
         function showClientsView() {
             mainContainer.style.display = 'none';
             clientsView.style.display = 'block';
             itemView.style.display = 'none';
+            romaneioChecklistView.style.display = 'none';
             loadClientsList();
         }
         
@@ -790,14 +796,14 @@
                 const partRulesData = partRulesSnapshot.val();
                 if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => loadedPartRules.push({id, ...data}));
 
-                renderDocument(clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
+                renderDocument(clientId, clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
             } catch (error) {
                 console.error("Erro ao gerar documento:", error);
                 alert("Ocorreu um erro ao gerar o documento.");
             }
         }
 
-        function renderDocument(spreadsheetData, documentRules, documentPartRules, mode) {
+        function renderDocument(clientId, spreadsheetData, documentRules, documentPartRules, mode) {
             const romaneioHeaderContainer = document.getElementById('romaneio-header');
             const romaneioItemsContainer = document.getElementById('romaneio-items');
             romaneioHeaderContainer.innerHTML = '';
@@ -895,6 +901,13 @@
             signatureSection.innerHTML = `<div class="signature-line"><div></div><p>Assinatura Conferente</p></div><div class="signature-line"><div></div><p>Assinatura do Supervisor</p></div>`;
             romaneioItemsContainer.appendChild(signatureSection);
             
+            const romaneioFooter = document.querySelector('#romaneioModal .romaneio-footer');
+            romaneioFooter.innerHTML = `
+                <button onclick="window.print()" class="btn btn--primary" style="flex-grow: 0;"><i data-feather="printer"></i><span>Imprimir</span></button>
+                <button onclick="showRomaneioChecklistView('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>
+            `;
+            feather.replace();
+
             document.getElementById('romaneioModal').style.display = 'flex';
         }
         
@@ -903,6 +916,7 @@
             itemView.style.display = 'block';
             mainContainer.style.display = 'none';
             clientsView.style.display = 'none';
+            romaneioChecklistView.style.display = 'none';
             
             itemView.innerHTML = '<div class="view__content"><h2>Carregando dados da ordem...</h2></div>';
 
@@ -1186,6 +1200,128 @@
             treatmentModal.style.display = 'flex';
         }
 
+        // --- NOVAS FUNÇÕES PARA CHECKLIST DE ROMANEIO ---
+        function shareRomaneioLink(clientId) {
+            const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
+            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist copiado!'));
+        }
+
+        function updateRomaneioChecklistStatus(clientId, itemPos, itemText, isChecked) {
+            database.ref(`dados/romaneio_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
+        }
+
+        async function showRomaneioChecklistView(clientId) {
+            mainContainer.style.display = 'none';
+            clientsView.style.display = 'none';
+            itemView.style.display = 'none';
+            romaneioChecklistView.style.display = 'block';
+            
+            romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Carregando checklist do romaneio...</h2></div>';
+
+            try {
+                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
+                    database.ref('dados/romaneio').once('value'),
+                    database.ref('dados/romaneioPecas').once('value')
+                ]);
+
+                const clientData = clientSnapshot.val();
+                if (!clientData) { romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
+
+                const romaneioRules = [];
+                const rulesData = rulesSnapshot.val();
+                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => romaneioRules.push({id, ...data}));
+
+                const romaneioPartRules = [];
+                const partRulesData = partRulesSnapshot.val();
+                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => romaneioPartRules.push({id, ...data}));
+
+                let contentHTML = `
+                    <div class="view__content">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <h2 class="view__title" style="margin-bottom: 0;">Checklist Romaneio: ${clientData.name}</h2>
+                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareRomaneioLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
+                        </div>
+                        <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--color-border);">
+                    </div>`;
+                
+                const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+                const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
+                const codeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
+                const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+                
+                const tableData = clientData.spreadsheetData.slice(tableHeaderRowIndex + 1);
+                tableData.forEach((rowData, index) => {
+                    const itemCode = String(rowData[codeColumnIndex] || '').trim().toUpperCase();
+                    if (!itemCode) return;
+
+                    const itemPos = String(rowData[0] || index + 1);
+                    const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
+                    
+                    let combinedChecklist = [];
+                    romaneioPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
+                    romaneioRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
+
+                    if (combinedChecklist.length > 0) {
+                        let checklistHTML = `<h4 class="romaneio-item__checklist-title">Itens de Conferência</h4>`;
+                        combinedChecklist.forEach((checkItem, checkIndex) => {
+                            const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
+                            const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                            checklistHTML += `
+                                <div class="interactive-checklist-item">
+                                    <label for="${checkId}">
+                                        <input type="checkbox" id="${checkId}" onchange="updateRomaneioChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
+                                        <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
+                                    </label>
+                                </div>`;
+                        });
+                        
+                        contentHTML += `
+                            <div class="conference-item view__content">
+                                <div class="conference-item__info" style="flex-basis: 100%;">
+                                    <p class="conference-item__pos">Pos. ${itemPos}</p>
+                                    <p class="conference-item__code">${itemCode}</p>
+                                    <p class="conference-item__desc">${itemDesc}</p>
+                                </div>
+                                <div class="conference-item__checklist" style="flex-basis: 100%;">${checklistHTML}</div>
+                            </div>`;
+                    }
+                });
+                romaneioChecklistView.innerHTML = contentHTML;
+                feather.replace();
+                
+                database.ref(`dados/romaneio_checklist_status/${clientId}`).on('value', statusSnapshot => {
+                    const statuses = statusSnapshot.val();
+                    if(statuses) {
+                        Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
+                            Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
+                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
+                                if(itemRow) {
+                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
+                                    let tempCombinedChecklist = [];
+                                    romaneioPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push(i)));
+                                    romaneioRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push({ ...i, quantity: 1 })));
+                                    
+                                    const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
+                                    if(checkIndex !== -1) {
+                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
+                                        const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                        const checkbox = document.getElementById(checkId);
+                                        if (checkbox && checkbox.checked !== isChecked) {
+                                            checkbox.checked = isChecked;
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar checklist do romaneio:", error);
+                romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar o checklist.</h2></div>';
+            }
+        }
+
 
         // --- INICIALIZAÇÃO ---
         window.addEventListener('load', () => {
@@ -1194,7 +1330,13 @@
                 if (clientId) {
                     showProductionItemView(clientId);
                 }
-            } else {
+            } else if (window.location.hash && window.location.hash.startsWith('#romaneio-checklist=')) {
+                const clientId = window.location.hash.substring(20);
+                if (clientId) {
+                    showRomaneioChecklistView(clientId);
+                }
+            }
+            else {
                  showMainView();
             }
         });
