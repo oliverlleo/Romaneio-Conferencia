@@ -13,7 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- Biblioteca PapaParse para exportar CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparser.min.js"></script>
 
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -102,16 +102,13 @@
         .romaneio-item__checklist-title { font-weight: 600; margin-bottom: 1rem; }
         .romaneio-item__checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
         .romaneio-item__checkbox-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-        .romaneio-item__checkbox-box { width: 20px; height: 20px; border: 2px solid var(--color-text-light); border-radius: 4px; flex-shrink: 0; }
+        .romaneio-item__checkbox-box { width: 20px; height: 20px; border: 2px solid var(--color-text-light); border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--color-accent-primary); }
         .romaneio-item__symbol { margin-right: 0.5rem; font-size: 1.2rem; line-height: 1; }
         .romaneio-footer { padding: 1.5rem 2rem; background-color: var(--color-bg); display: flex; gap: 1rem; justify-content: flex-end; }
         .romaneio-observations { border-top: 1px solid var(--color-border); padding-top: 1.5rem; margin-top: 1.5rem; }
         .romaneio-signatures { padding-top: 4rem; margin-top: 4rem; display: flex; justify-content: space-around; }
         .signature-line { text-align: center; }
         .signature-line > div { border-top: 1px solid var(--color-text); width: 200px; margin-bottom: 0.5rem; }
-        .interactive-checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding: 0.25rem 0; }
-        .interactive-checklist-item label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 1rem; }
-        .interactive-checklist-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
         
         /* --- ESTILOS DO MODAL DE TRATAMENTO --- */
         .treatment-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
@@ -134,6 +131,23 @@
         #treatmentResultTable th { background-color: var(--color-bg); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-light); }
         #treatmentResultTable tbody tr:nth-child(even) { background-color: #F8FAFC; }
         #treatmentResultTable tbody tr:hover { background-color: #F1F5F9; }
+
+        /* --- [INÍCIO] ESTILOS DE ACESSIBILIDADE PARA CHECKLIST ONLINE --- */
+        .checklist-page .romaneio-item__checklist-item {
+            padding: 0.5rem 0; /* Adiciona espaçamento vertical */
+        }
+        .checklist-page .romaneio-item__checkbox-group input[type="checkbox"] {
+            width: 28px;  /* Aumenta o tamanho do checkbox */
+            height: 28px; /* Aumenta o tamanho do checkbox */
+            cursor: pointer;
+        }
+        .checklist-page .romaneio-item__checklist-item > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.1rem; /* Aumenta o tamanho da fonte do texto */
+        }
+        /* --- [FIM] ESTILOS DE ACESSIBILIDADE PARA CHECKLIST ONLINE --- */
 
         /* --- [INÍCIO] ESTILOS CORRIGIDOS PARA O CHECKLIST ONLINE --- */
         .checklist-page .romaneio-item__info {
@@ -724,18 +738,21 @@
                 const partRulesData = partRulesSnapshot.val();
                 if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => loadedPartRules.push({id, ...data}));
 
-                renderDocument(clientId, clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
+                await renderDocument(clientId, clientData.spreadsheetData, loadedRules, loadedPartRules, mode);
             } catch (error) {
                 console.error("Erro ao gerar documento:", error);
                 alert("Ocorreu um erro ao gerar o documento.");
             }
         }
 
-        function renderDocument(clientId, spreadsheetData, documentRules, documentPartRules, mode) {
+        async function renderDocument(clientId, spreadsheetData, documentRules, documentPartRules, mode) {
             const romaneioHeaderContainer = document.getElementById('romaneio-header');
             const romaneioItemsContainer = document.getElementById('romaneio-items');
             romaneioHeaderContainer.innerHTML = '';
             romaneioItemsContainer.innerHTML = '';
+            
+            const statusSnapshot = await database.ref(`dados/${mode}_checklist_status/${clientId}`).once('value');
+            const statuses = statusSnapshot.val() || {};
 
             const tableHeaderRowIndex = spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
             if (tableHeaderRowIndex === -1) { alert("Cabeçalho 'CÓDIGO' não encontrado na planilha salva."); return; }
@@ -777,10 +794,11 @@
 
                 let checklistHTML = `<h4 class="romaneio-item__checklist-title">${checklistTitle}</h4>`;
                 if (combinedChecklist.length > 0) {
-                    combinedChecklist.forEach(checkItem => {
+                    combinedChecklist.forEach((checkItem, checkItemIndex) => {
                         let boxesHTML = '';
                         for (let i = 0; i < (checkItem.quantity || 1); i++) {
-                            boxesHTML += '<div class="romaneio-item__checkbox-box"></div>';
+                            const isChecked = statuses[itemPos]?.[checkItemIndex]?.[i] === true;
+                            boxesHTML += `<div class="romaneio-item__checkbox-box">${isChecked ? '✔' : ''}</div>`;
                         }
                         checklistHTML += `
                             <div class="romaneio-item__checklist-item">
@@ -964,18 +982,23 @@
             window.open(checklistUrl, '_blank');
         }
 
+        function shareRomaneioChecklistLink(clientId) {
+            const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
+            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de romaneio copiado!'));
+        }
+
         function shareProductionChecklistLink(clientId) {
             const shareUrl = `${window.location.href.split('#')[0]}#production-checklist=${clientId}`;
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de produção copiado!'));
         }
 
-        function updateProducaoChecklistStatus(clientId, itemPos, itemText, checkIndex, isChecked) {
-            const path = `dados/producao_checklist_status/${clientId}/${itemPos}/${itemText}/${checkIndex}`;
+        function updateProducaoChecklistStatus(clientId, itemPos, checkItemIndex, checkIndex, isChecked) {
+            const path = `dados/producao_checklist_status/${clientId}/${itemPos}/${checkItemIndex}/${checkIndex}`;
             database.ref(path).set(isChecked);
         }
 
-        function updateRomaneioChecklistStatus(clientId, itemPos, itemText, checkIndex, isChecked) {
-            const path = `dados/romaneio_checklist_status/${clientId}/${itemPos}/${itemText}/${checkIndex}`;
+        function updateRomaneioChecklistStatus(clientId, itemPos, checkItemIndex, checkIndex, isChecked) {
+            const path = `dados/romaneio_checklist_status/${clientId}/${itemPos}/${checkItemIndex}/${checkIndex}`;
             database.ref(path).set(isChecked);
         }
 
@@ -1007,13 +1030,15 @@
                 if (partRulesSnapshot.val()) Object.entries(partRulesSnapshot.val()).forEach(([id, data]) => partRules.push({ id, ...data }));
 
                 const title = mode === 'producao' ? 'Produção' : 'Romaneio';
-                const functionNamePrefix = title;
+                const functionNamePrefix = mode === 'producao' ? 'Producao' : 'Romaneio';
+                const shareFunctionName = mode === 'producao' ? 'shareProductionChecklistLink' : 'shareRomaneioChecklistLink';
+
 
                 let contentHTML = `
                     <div class="view__content view__content--large">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <h2 class="view__title" style="margin-bottom: 0;">Checklist ${title}: ${clientData.name}</h2>
-                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="share${functionNamePrefix}ChecklistLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
+                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="${shareFunctionName}('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
                         </div>
                     </div>`;
 
@@ -1062,7 +1087,6 @@
                             }
                         }
                         
-                        // --- [INÍCIO] ESTRUTURA HTML CORRIGIDA ---
                         contentHTML += `
                             <div class="romaneio-item view__content view__content--large checklist-page" style="margin-top: 1rem; padding-top: 1rem;">
                                 <div class="romaneio-item__info">
@@ -1076,7 +1100,6 @@
                                 </div>
                                 <div class="romaneio-item__checklist">${checklistHTML}</div>
                             </div>`;
-                        // --- [FIM] ESTRUTURA HTML CORRIGIDA ---
                     }
                 });
                 viewEl.innerHTML = contentHTML;
