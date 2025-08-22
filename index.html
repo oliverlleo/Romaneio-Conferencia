@@ -1110,8 +1110,8 @@
                 summaryTbodyCategory.innerHTML += `<tr><td>${item}</td><td>${qtd}</td></tr>`;
             });
             
-            await populateDropdown('funcionarios', 'servicoFuncionario');
-            await populateDropdown('servicos', 'servicoEtapa');
+            await populateDropdown('funcionario', 'servicoFuncionario');
+            await populateDropdown('servico', 'servicoEtapa');
             document.getElementById('servicoData').valueAsDate = new Date();
             renderClientServices(clientId);
 
