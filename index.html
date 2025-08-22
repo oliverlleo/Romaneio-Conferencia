@@ -11,6 +11,9 @@
 
     <!-- Biblioteca SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Biblioteca PapaParse para exportar CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,13 +53,15 @@
         .view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--color-bg); z-index: 2000; padding: 2rem; overflow-y: auto; }
         .view__title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: var(--color-text); }
         .view__content { max-width: 900px; margin: 0 auto; }
+        .view__content--large { max-width: 1400px; }
         .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(30, 41, 59, 0.8); align-items: center; justify-content: center; }
         .modal__content { background-color: var(--color-panel-bg); padding: 2.5rem; border-radius: 8px; width: 90%; max-width: 700px; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal__content--large { max-width: 1100px; }
+        .modal__content--xlarge { max-width: 1600px; /* Aumentado para o novo layout */ }
         .modal__close { color: var(--color-text-light); position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; font-weight: bold; cursor: pointer; line-height: 1; }
         .modal__close:hover { color: var(--color-text); }
         .modal__section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
-        .modal__subtitle { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: var(--color-accent-secondary); }
+        .modal__subtitle { font-size: 1rem; margin-bottom: 1rem; color: var(--color-text-light); }
         .form-grid { display: grid; gap: 1rem; }
         .form-input, .form-textarea, .form-select { width: 100%; padding: 0.75rem; border-radius: 6px; font-family: var(--font-family-sans); font-size: 1rem; background-color: var(--color-bg); border: 1px solid var(--color-border); color: var(--color-text); }
         .form-input:focus, .form-textarea:focus, .form-select:focus { outline: 2px solid var(--color-accent-primary); border-color: var(--color-accent-primary); }
@@ -117,7 +122,132 @@
         .interactive-checklist-item:hover { background-color: #F8FAFC; }
         .interactive-checklist-item label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 1rem; }
         .interactive-checklist-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
-        @media print { @page { size: A4; margin: 1cm; } body { background-color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } body > *:not(#romaneioModal), .modal__close, .romaneio-footer { display: none !important; } #romaneioModal, #romaneioModal .modal__content, .romaneio-page { position: static !important; display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } .romaneio-item { page-break-inside: avoid; } }
+        
+        /* --- NOVOS ESTILOS DO MODAL DE TRATAMENTO --- */
+        .treatment-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--color-text);
+        }
+
+        .treatment-layout {
+            display: grid;
+            grid-template-columns: 2.5fr 1fr; /* Mais espaço para a tabela principal */
+            gap: 2.5rem;
+        }
+
+        .treatment-summary-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .summary-card {
+            background-color: var(--color-panel-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--color-border);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+
+        #total-geral-summary {
+            background: linear-gradient(145deg, var(--color-accent-primary), #14B8A6);
+            color: white;
+            text-align: center;
+        }
+
+        #total-geral-summary .total-label {
+            font-size: 1rem;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        #total-geral-summary .total-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .summary-card__title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--color-accent-secondary);
+        }
+
+        .table-wrapper--condensed {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .summary-table th, .summary-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+        .summary-table th {
+            font-weight: 600;
+            color: var(--color-text-light);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+        .summary-table tr:last-child td {
+            border-bottom: none;
+        }
+        .summary-table td:last-child {
+            text-align: right;
+            font-weight: 700;
+        }
+
+        /* Melhorias na Tabela Principal */
+        #treatmentResultTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        #treatmentResultTable th, #treatmentResultTable td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            white-space: normal; /* Permite quebra de linha */
+        }
+        #treatmentResultTable th {
+            background-color: var(--color-bg);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-light);
+        }
+        #treatmentResultTable tbody tr:nth-child(even) {
+            background-color: #F8FAFC;
+        }
+        #treatmentResultTable tbody tr:hover {
+            background-color: #F1F5F9;
+        }
+
+
+        @media (max-width: 1100px) {
+            .treatment-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media print { @page { size: A4; margin: 1cm; } body { background-color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } body > *:not(#romaneioModal):not(#treatmentModal), .modal__close, .romaneio-footer { display: none !important; } #romaneioModal, #romaneioModal .modal__content, .romaneio-page, #treatmentModal, #treatmentModal .modal__content { position: static !important; display: block !important; width: 100% !important; height: auto !important; overflow: visible !important; background: transparent !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; } .romaneio-item { page-break-inside: avoid; } }
     </style>
 </head>
 <body>
@@ -152,7 +282,7 @@
                     <thead>
                         <tr>
                             <th class="data-table__th">Nome do Cliente</th>
-                            <th class="data-table__th" style="width: 520px;">Ações</th>
+                            <th class="data-table__th" style="width: 620px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="production-clients-list"></tbody>
@@ -165,7 +295,7 @@
         <!-- Conteúdo do checklist interativo será injetado aqui -->
     </div>
 
-    <!-- MODAL DE CONFIGURAÇÕES (LÓGICA ORIGINAL RESTAURADA) -->
+    <!-- MODAL DE CONFIGURAÇÕES -->
     <div id="configModal" class="modal">
         <div class="modal__content">
             <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
@@ -231,6 +361,57 @@
         </div>
     </div>
 
+    <!-- MODAL DE TRATAMENTO DE ITENS (NOVO LAYOUT) -->
+    <div id="treatmentModal" class="modal">
+        <div class="modal__content modal__content--xlarge">
+            <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
+            <div class="treatment-header">
+                <h2 class="modal__title" id="treatment-client-name">Tratamento de Itens</h2>
+                <p class="modal__subtitle">Análise detalhada e resumo quantitativo dos itens da planilha.</p>
+            </div>
+            <div class="treatment-layout">
+                <div class="treatment-main-content">
+                    <h3 class="section-title">Lista de Itens Processados</h3>
+                    <div class="table-wrapper">
+                        <table id="treatmentResultTable" class="data-table">
+                             <thead>
+                                <tr>
+                                    <th>TIPO</th><th>ITENS</th><th>DESCRIÇÃO</th><th>AMBIENTE</th><th>COR</th><th>PRODUTO</th><th>CATEGORIA</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="treatment-summary-sidebar">
+                    <h3 class="section-title">Resumo Geral</h3>
+                    <div id="total-geral-summary" class="summary-card">
+                        <!-- Conteúdo injetado via JS -->
+                    </div>
+                    <div class="summary-card">
+                        <h4 class="summary-card__title">Total por Produto</h4>
+                        <div class="table-wrapper--condensed">
+                            <table id="treatmentSummaryTableProduct" class="summary-table">
+                                <thead><tr><th>PRODUTO</th><th>QTD</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <h4 class="summary-card__title">Total por Categoria</h4>
+                         <div class="table-wrapper--condensed">
+                            <table id="treatmentSummaryTableCategory" class="summary-table">
+                                <thead><tr><th>CATEGORIA</th><th>QTD</th></tr></thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         // --- CONFIGURAÇÃO FIREBASE ---
         const firebaseConfig = {"apiKey":"AIzaSyCB8ye34UIkBghExod4JlBV3oqge5oM2Ic","authDomain":"ferramentas-perfecta.firebaseapp.com","databaseURL":"https://ferramentas-perfecta-default-rtdb.firebaseio.com","projectId":"ferramentas-perfecta","storageBucket":"ferramentas-perfecta.appspot.com","messagingSenderId":"550722056346","appId":"1:550722056346:web:9e2e0948c58e15b5af6f23"};
@@ -250,6 +431,7 @@
         const itemView = document.getElementById('production-item-view');
         const configModal = document.getElementById('configModal');
         const analysisModal = document.getElementById('analysisModal');
+        const treatmentModal = document.getElementById('treatmentModal');
 
         function showMainView() {
             mainContainer.style.display = 'block';
@@ -455,7 +637,7 @@
         document.getElementById('cancelPartEdit').addEventListener('click', resetPartRuleForm);
 
 
-        // --- LÓGICA DE PROCESSAMENTO DE PLANILHA (RESTAURADA E COMPLETA) ---
+        // --- LÓGICA DE PROCESSAMENTO DE PLANILHA ---
         document.getElementById('fileInput').addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -513,21 +695,43 @@
             const table = document.createElement('table');
             table.className = "data-table";
             table.innerHTML = `<thead><tr>${header.map(h => `<th class="data-table__th">${h}</th>`).join('')}</tr></thead>
-                             <tbody>${tableData.map(rowData => `<tr>${rowData.map(cell => `<td class="data-table__td">${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
+                                     <tbody>${tableData.map(rowData => `<tr>${rowData.map(cell => `<td class="data-table__td">${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
             tableContainer.appendChild(table);
         }
 
-        document.getElementById('saveClientButton').addEventListener('click', () => {
-            if (fullSpreadsheetData.length === 0) { alert('Nenhuma planilha carregada.'); return; }
-            const clientName = prompt("Digite o nome do cliente/obra:", `Cliente ${new Date().toLocaleDateString()}`);
+        function saveClient() {
+            if (fullSpreadsheetData.length === 0) {
+                alert('Nenhuma planilha carregada para salvar.');
+                return;
+            }
+
+            const headerLinesElements = document.querySelectorAll('#spreadsheet-header-container .spreadsheet-header__line');
+            let clientName = '';
+
+            const headerTexts = Array.from(headerLinesElements).map(el => el.textContent.trim());
+            const potentialNames = headerTexts.filter(text => {
+                const isTitle = text.toLowerCase().includes('planilha de itens');
+                const isOrderNumber = text.includes('N.º');
+                const isDateTime = /^\d{2}\/\d{2}\/\d{4}/.test(text);
+                return !isTitle && !isOrderNumber && !isDateTime;
+            });
+
+            if (potentialNames.length > 0) {
+                clientName = potentialNames[0];
+            } else {
+                 clientName = prompt("Não foi possível identificar o nome. Por favor, digite o nome do cliente/obra:", `Cliente ${new Date().toLocaleDateString()}`);
+            }
+            
             if(!clientName) return;
+
             const clientData = { name: clientName, spreadsheetData: fullSpreadsheetData, createdAt: new Date().toISOString() };
             database.ref('dados/producao_clientes').push(clientData)
                 .then(() => alert(`Cliente "${clientName}" salvo com sucesso!`))
                 .catch(error => alert("Erro ao salvar."));
-        });
+        }
+        document.getElementById('saveClientButton').addEventListener('click', saveClient);
 
-        // --- LÓGICA DA TELA DE CLIENTES (RESTAURADA E COMPLETA) ---
+        // --- LÓGICA DA TELA DE CLIENTES ---
         function loadClientsList() {
             const listBody = document.getElementById('production-clients-list');
             listBody.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
@@ -543,7 +747,8 @@
                             <td class="data-table__td">
                                 <div style="display: flex; gap: 0.5rem; justify-content: flex-start;">
                                     <button class="btn btn--primary" onclick="showProductionItemView('${clientId}')">Ver Ordem</button>
-                                    <button class="btn btn--success" onclick="generateDocument('${clientId}', 'producao')">Produção</button>
+                                    <button class="btn btn--success" onclick="showItemTreatmentView('${clientId}')">Tratar Itens</button>
+                                    <button class="btn btn--success" style="background-color: #5a67d8;" onclick="generateDocument('${clientId}', 'producao')">Produção</button>
                                     <button class="btn btn--secondary" onclick="generateDocument('${clientId}', 'romaneio')">Romaneio</button>
                                     <button class="btn btn--warning btn--icon" title="Compartilhar Link" onclick="shareOrderLink('${clientId}')"><i data-feather="share-2"></i></button>
                                 </div>
@@ -562,7 +767,7 @@
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link copiado!'));
         }
 
-        // --- LÓGICA DE GERAÇÃO DE DOCUMENTOS (CORRIGIDA E COMPLETA) ---
+        // --- LÓGICA DE GERAÇÃO DE DOCUMENTOS ---
         async function generateDocument(clientId, mode) {
             try {
                 const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
@@ -693,7 +898,7 @@
             document.getElementById('romaneioModal').style.display = 'flex';
         }
         
-        // --- LÓGICA DO CHECKLIST INTERATIVO "VER ORDEM" (RESTAURADA) ---
+        // --- LÓGICA DO CHECKLIST INTERATIVO "VER ORDEM" ---
         async function showProductionItemView(clientId) {
             itemView.style.display = 'block';
             mainContainer.style.display = 'none';
@@ -720,9 +925,9 @@
                 if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
 
                 let contentHTML = `<div class="view__content">
-                                    <h2 class="view__title">Acompanhamento: ${clientData.name}</h2>
-                                    <button class="btn btn--secondary" style="margin-bottom: 2rem; max-width: 200px;" onclick="showClientsView()"><i data-feather="arrow-left"></i> <span>Voltar para Clientes</span></button>
-                                   </div>`;
+                                        <h2 class="view__title">Acompanhamento: ${clientData.name}</h2>
+                                        <button class="btn btn--secondary" style="margin-bottom: 2rem; max-width: 200px;" onclick="showClientsView()"><i data-feather="arrow-left"></i> <span>Voltar para Clientes</span></button>
+                                       </div>`;
                 
                 const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
                 const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
@@ -784,8 +989,6 @@
                     if(statuses) {
                         Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
                             Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
-                                // Precisa reconstruir o combinedChecklist para encontrar o checkIndex
                                 const itemRow = tableData.find(row => (row[0] || '') == itemPos);
                                 if(itemRow) {
                                     const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
@@ -795,9 +998,10 @@
                                     
                                     const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
                                     if(checkIndex !== -1) {
+                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
                                         const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
                                         const checkbox = document.getElementById(checkId);
-                                        if (checkbox) {
+                                        if (checkbox && checkbox.checked !== isChecked) {
                                             checkbox.checked = isChecked;
                                         }
                                     }
@@ -815,13 +1019,12 @@
             database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
         
-        // --- LÓGICA DE ANÁLISE DE TABELA (RESTAURADA) ---
+        // --- LÓGICA DE ANÁLISE DE TABELA ---
         async function analyzeCurrentTable() {
             const analysisResultContainer = document.getElementById('analysisResult');
             analysisResultContainer.innerHTML = 'Analisando...';
         
-            const table = document.querySelector('#table-container table');
-            if (!table || fullSpreadsheetData.length === 0) {
+            if (fullSpreadsheetData.length === 0) {
                 analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Nenhuma tabela para analisar. Carregue uma planilha primeiro.</p>';
                 return;
             }
@@ -838,20 +1041,20 @@
                 const analysisPartRules = [];
                 if(partRulesSnapshot.val()) Object.values(partRulesSnapshot.val()).forEach(data => analysisPartRules.push(data));
         
-                const headerRow = table.querySelector('thead tr');
-                const codeColIndex = Array.from(headerRow.cells).findIndex(th => th.textContent.toUpperCase().includes('CÓDIGO'));
-        
+                const tableHeaderRowIndex = fullSpreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+                const header = fullSpreadsheetData[tableHeaderRowIndex];
+                const codeColIndex = header.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
+
                 if (codeColIndex === -1) {
                     analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Coluna "CÓDIGO" não encontrada na tabela.</p>';
                     return;
                 }
         
                 analysisResultContainer.innerHTML = ''; 
-                const dataRows = Array.from(table.querySelectorAll('tbody tr'));
+                const dataRows = fullSpreadsheetData.slice(tableHeaderRowIndex + 1);
         
                 dataRows.forEach((row, rowIndex) => {
-                    const codeCell = row.cells[codeColIndex];
-                    const itemCode = (codeCell.textContent || '').trim().toUpperCase();
+                    const itemCode = (row[codeColIndex] || '').trim().toUpperCase();
                     if (!itemCode) return;
         
                     const hasCodeRule = analysisRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
@@ -874,6 +1077,113 @@
                 console.error("Erro ao analisar tabela:", error);
                 analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Ocorreu um erro durante a análise.</p>';
             }
+        }
+
+        // --- LÓGICA DE TRATAMENTO DE ITENS (REMODELADA) ---
+        function getCodigo(texto) {
+            const str = texto.toLowerCase();
+            if (str.includes("fixo")) return "Fixo";
+            if (str.includes("porta de correr") && str.includes("persiana")) return "PCR Integrada";
+            if (str.includes("janela de correr") && str.includes("persiana")) return "JCR Integrada";
+            if (str.includes("porta de correr")) return "PCR";
+            if (str.includes("janela de correr")) return "JCR";
+            if (str.includes("persiana")) return "Integrada";
+            if (str.includes("acm")) return "ACM";
+            if (str.includes("maxim-ar") || str.includes("maxim") || str.includes("max")) return "Maxim-ar";
+            if (str.includes("porta de giro")) return "PGR";
+            if (str.includes("oscilo") || str.includes("osc") || str.includes("abt")) return "Oscilo";
+            if (str.includes("pivotante")) return "Pivotante";
+            if (str.includes("brise")) return "Brise";
+            if (str.includes("ripado")) return "Ripado";
+            return "";
+        }
+
+        function getCodigo2(texto) {
+            const str = texto.toLowerCase();
+            if (str.includes("gol")) return "Aluminio";
+            if (str.includes("rip")) return "Ripado";
+            if (str.includes("brise")) return "Brise";
+            if (str.includes("acm") || str.includes("layer")) return "Layer";
+            return "PVC";
+        }
+
+        async function showItemTreatmentView(clientId) {
+            const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
+            const clientData = clientSnapshot.val();
+            if (!clientData || !clientData.spreadsheetData) {
+                alert('Erro: Dados do cliente não encontrados.');
+                return;
+            }
+            
+            document.getElementById('treatment-client-name').textContent = `Tratamento de Itens: ${clientData.name}`;
+
+            const data = clientData.spreadsheetData;
+            let processedData = [];
+            const summaryCounts = {};
+            const summaryCounts2 = {};
+            let totalItens = 0;
+
+            const headerRowIndex = data.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+            if(headerRowIndex === -1) { alert("Cabeçalho 'CÓDIGO' não encontrado na planilha do cliente."); return; }
+            const header = data[headerRowIndex];
+            const dataRows = data.slice(headerRowIndex + 1);
+            
+            const tipoIndex = header.findIndex(h => String(h).toUpperCase().includes('TIPO'));
+            const itensIndex = header.findIndex(h => String(h).toUpperCase().includes('ITENS'));
+            const descIndex = header.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+            const ambienteIndex = header.findIndex(h => String(h).toUpperCase().includes('AMBIENTE'));
+            const corIndex = header.findIndex(h => String(h).toUpperCase().includes('COR'));
+            const qtdIndex = header.findIndex(h => String(h).toUpperCase().includes('QTD'));
+
+            dataRows.forEach(row => {
+                const quantidadeStr = qtdIndex !== -1 ? String(row[qtdIndex]).replace(",", ".") : '0';
+                if (row.length > 1 && quantidadeStr.trim() !== '' && !isNaN(quantidadeStr)) {
+                    const tipo = tipoIndex !== -1 ? row[tipoIndex] : '';
+                    const itens = itensIndex !== -1 ? row[itensIndex] : '';
+                    const descricao = descIndex !== -1 ? row[descIndex] : '';
+                    const ambiente = ambienteIndex !== -1 ? row[ambienteIndex] : '';
+                    const cor = corIndex !== -1 ? row[corIndex] : '';
+                    const produto = getCodigo(descricao);
+                    const categoria = getCodigo2(itens);
+                    const quantidade = parseFloat(quantidadeStr);
+                    
+                    processedData.push([tipo, itens, descricao, ambiente, cor, produto, categoria, quantidade]);
+
+                    if (produto) {
+                        summaryCounts[produto] = (summaryCounts[produto] || 0) + quantidade;
+                    }
+                    summaryCounts2[categoria] = (summaryCounts2[categoria] || 0) + quantidade;
+                    totalItens += quantidade;
+                }
+            });
+
+            const resultTbody = document.querySelector('#treatmentResultTable tbody');
+            resultTbody.innerHTML = '';
+            processedData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = row.slice(0, 7).map(cell => `<td>${cell || ''}</td>`).join('');
+                resultTbody.appendChild(tr);
+            });
+
+            const totalGeralContainer = document.getElementById('total-geral-summary');
+            totalGeralContainer.innerHTML = `
+                <div class="total-label">Total Geral de Itens</div>
+                <div class="total-value">${totalItens}</div>
+            `;
+
+            const summaryTbodyProduct = document.querySelector('#treatmentSummaryTableProduct tbody');
+            summaryTbodyProduct.innerHTML = '';
+            Object.entries(summaryCounts).forEach(([item, qtd]) => {
+                summaryTbodyProduct.innerHTML += `<tr><td>${item}</td><td>${qtd}</td></tr>`;
+            });
+
+            const summaryTbodyCategory = document.querySelector('#treatmentSummaryTableCategory tbody');
+            summaryTbodyCategory.innerHTML = '';
+            Object.entries(summaryCounts2).forEach(([item, qtd]) => {
+                summaryTbodyCategory.innerHTML += `<tr><td>${item}</td><td>${qtd}</td></tr>`;
+            });
+
+            treatmentModal.style.display = 'flex';
         }
 
 
