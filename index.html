@@ -1269,7 +1269,7 @@
                 if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => romaneioPartRules.push({id, ...data}));
 
                 let contentHTML = `
-                    <div class="view__content">
+                    <div class="view__content view__content--large">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <h2 class="view__title" style="margin-bottom: 0;">Checklist Romaneio: ${clientData.name}</h2>
                             <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareRomaneioLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
@@ -1320,13 +1320,13 @@
                         });
                         
                         contentHTML += `
-                            <div class="conference-item view__content">
-                                <div class="conference-item__info" style="flex-basis: 100%;">
+                            <div class="conference-item view__content view__content--large">
+                                <div class="conference-item__info">
                                     <p class="conference-item__pos">Pos. ${itemPos}</p>
                                     <p class="conference-item__code">${itemCode}</p>
                                     <p class="conference-item__desc">${itemDesc}</p>
                                 </div>
-                                <div class="conference-item__checklist" style="flex-basis: 100%;">${checklistHTML}</div>
+                                <div class="conference-item__checklist">${checklistHTML}</div>
                             </div>`;
                     }
                 });
@@ -1401,7 +1401,7 @@
                 if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
 
                 let contentHTML = `
-                    <div class="view__content">
+                    <div class="view__content view__content--large">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                             <h2 class="view__title" style="margin-bottom: 0;">Checklist Produção: ${clientData.name}</h2>
                             <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareProductionChecklistLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
@@ -1452,13 +1452,13 @@
                         });
                         
                         contentHTML += `
-                            <div class="conference-item view__content">
-                                <div class="conference-item__info" style="flex-basis: 100%;">
+                            <div class="conference-item view__content view__content--large">
+                                <div class="conference-item__info">
                                     <p class="conference-item__pos">Pos. ${itemPos}</p>
                                     <p class="conference-item__code">${itemCode}</p>
                                     <p class="conference-item__desc">${itemDesc}</p>
                                 </div>
-                                <div class="conference-item__checklist" style="flex-basis: 100%;">${checklistHTML}</div>
+                                <div class="conference-item__checklist">${checklistHTML}</div>
                             </div>`;
                     }
                 });
@@ -1509,17 +1509,17 @@
         // --- INICIALIZAÇÃO ---
         window.addEventListener('load', () => {
             if (window.location.hash && window.location.hash.startsWith('#order=')) {
-                const clientId = window.location.hash.substring(7);
+                const clientId = window.location.hash.substring(6);
                 if (clientId) {
                     showProductionItemView(clientId);
                 }
             } else if (window.location.hash && window.location.hash.startsWith('#romaneio-checklist=')) {
-                const clientId = window.location.hash.substring(20);
+                const clientId = window.location.hash.substring(19);
                 if (clientId) {
                     showRomaneioChecklistView(clientId);
                 }
             } else if (window.location.hash && window.location.hash.startsWith('#production-checklist=')) {
-                const clientId = window.location.hash.substring(23);
+                const clientId = window.location.hash.substring(22);
                 if (clientId) {
                     showProductionChecklistView(clientId);
                 }
