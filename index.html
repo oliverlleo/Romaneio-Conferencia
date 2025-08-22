@@ -28,7 +28,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { font-size: 16px; }
         body { font-family: var(--font-family-sans); background-color: var(--color-bg); color: var(--color-text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-        .app-container { display: block; width: 100%; max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
+        .app-container { display: none; width: 100%; max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
         .app-header { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 2rem; color: var(--color-text); }
         .action-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
         .status-text { text-align: center; margin: 2rem 0; color: var(--color-text-light); }
@@ -50,14 +50,14 @@
         .btn--icon:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); background-color: #F0FDFA; }
         .btn--icon.btn--warning:hover { color: var(--color-warning); border-color: var(--color-warning); background-color: #FFFBEB; }
         .file-input { display: none; }
-        .view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--color-bg); z-index: 2000; padding: 2rem; overflow-y: auto; }
+        .view { display: none; width: 100%; }
         .view__title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: var(--color-text); }
-        .view__content { max-width: 900px; margin: 0 auto; }
+        .view__content { max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
         .view__content--large { max-width: 1400px; }
         .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(30, 41, 59, 0.8); align-items: center; justify-content: center; }
         .modal__content { background-color: var(--color-panel-bg); padding: 2.5rem; border-radius: 8px; width: 90%; max-width: 700px; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal__content--large { max-width: 1100px; }
-        .modal__content--xlarge { max-width: 1600px; /* Aumentado para o novo layout */ }
+        .modal__content--xlarge { max-width: 1600px; }
         .modal__close { color: var(--color-text-light); position: absolute; top: 1rem; right: 1.5rem; font-size: 2rem; font-weight: bold; cursor: pointer; line-height: 1; }
         .modal__close:hover { color: var(--color-text); }
         .modal__section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
@@ -87,21 +87,21 @@
         .analysis-result__item { padding: 0.5rem 1rem; margin-bottom: 0.5rem; border-radius: 4px; }
         .analysis-result__item--success { background-color: #D1FAE5; color: #065F46; }
         .analysis-result__item--fail { background-color: #FEE2E2; color: #991B1B; }
-        .romaneio-page { flex-grow: 1; overflow-y: auto; background-color: var(--color-panel-bg); padding: 2rem; }
+        .romaneio-page, .checklist-page { flex-grow: 1; overflow-y: auto; background-color: var(--color-panel-bg); padding: 2rem; }
         .romaneio-header { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid var(--color-text); }
         .romaneio-header p { margin-bottom: 0.25rem; }
         .romaneio-header strong { font-size: 1.5rem; display: block; margin-bottom: 1rem; }
-        .romaneio-item { padding: 1.5rem 0; display: flex; gap: 1rem; border-bottom: 1px solid var(--color-border); }
+        .romaneio-item { padding: 1.5rem 0; display: flex; gap: 2rem; border-bottom: 1px solid var(--color-border); }
         .romaneio-item__info { flex-grow: 1; }
         .romaneio-item__pos { font-size: 0.9rem; color: var(--color-text-light); font-weight: 500; }
         .romaneio-item__code { font-size: 1.2rem; font-weight: 700; }
         .romaneio-item__desc { font-size: 1rem; color: var(--color-text-light); }
         .romaneio-item__tipo { font-size: 1.2rem; font-weight: 700; color: var(--color-danger); margin-top: 0.25rem; }
-        .romaneio-item__image { max-width: 70%; height: auto; margin-top: 1rem; border-radius: 6px; }
-        .romaneio-item__checklist { flex-shrink: 0; width: 40%; border-left: 1px solid var(--color-border); padding-left: 1.5rem; }
+        .romaneio-item__image { max-width: 40%; height: auto; margin-top: 1rem; border-radius: 6px; }
+        .romaneio-item__checklist { flex-shrink: 0; width: 40%; border-left: 1px solid var(--color-border); padding-left: 2rem; }
         .romaneio-item__checklist-title { font-weight: 600; margin-bottom: 1rem; }
         .romaneio-item__checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
-        .romaneio-item__checkbox-group { display: flex; gap: 0.5rem; }
+        .romaneio-item__checkbox-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
         .romaneio-item__checkbox-box { width: 20px; height: 20px; border: 2px solid var(--color-text-light); border-radius: 4px; flex-shrink: 0; }
         .romaneio-item__symbol { margin-right: 0.5rem; font-size: 1.2rem; line-height: 1; }
         .romaneio-footer { padding: 1.5rem 2rem; background-color: var(--color-bg); display: flex; gap: 1rem; justify-content: flex-end; }
@@ -109,136 +109,56 @@
         .romaneio-signatures { padding-top: 4rem; margin-top: 4rem; display: flex; justify-content: space-around; }
         .signature-line { text-align: center; }
         .signature-line > div { border-top: 1px solid var(--color-text); width: 200px; margin-bottom: 0.5rem; }
-        .conference-item { display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 1.5rem; border-bottom: 1px solid var(--color-border); background-color: var(--color-panel-bg); align-items: flex-start; }
-        .conference-item:nth-child(even) { background-color: var(--color-bg); }
-        .conference-item__image-wrapper { flex: 0 0 20%; max-width: 20%; }
-        .conference-item__info { flex: 1 1 35%; }
-        .conference-item__checklist { flex: 1 1 40%; }
-        .conference-item__pos { font-size: 0.9rem; color: var(--color-text-light); font-weight: 500; }
-        .conference-item__code { font-size: 1.2rem; font-weight: 700; }
-        .conference-item__desc { font-size: 1rem; color: var(--color-text-light); }
-        .conference-item__image { max-width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 6px; }
-        .interactive-checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding: 0.75rem; border-radius: 6px; transition: background-color 0.2s; }
-        .interactive-checklist-item:hover { background-color: #F8FAFC; }
+        .interactive-checklist-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding: 0.25rem 0; }
         .interactive-checklist-item label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; font-size: 1rem; }
         .interactive-checklist-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
         
         /* --- ESTILOS DO MODAL DE TRATAMENTO --- */
-        .treatment-header {
-            margin-bottom: 2rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--color-border);
-        }
+        .treatment-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
+        .section-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--color-text); }
+        .treatment-layout { display: grid; grid-template-columns: 2.5fr 1fr; gap: 2.5rem; }
+        .treatment-summary-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+        .summary-card { background-color: var(--color-panel-bg); border-radius: 8px; padding: 1.5rem; border: 1px solid var(--color-border); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); }
+        #total-geral-summary { background: linear-gradient(145deg, var(--color-accent-primary), #14B8A6); color: white; text-align: center; }
+        #total-geral-summary .total-label { font-size: 1rem; font-weight: 500; opacity: 0.9; margin-bottom: 0.5rem; }
+        #total-geral-summary .total-value { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+        .summary-card__title { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--color-accent-secondary); }
+        .table-wrapper--condensed { max-height: 250px; overflow-y: auto; }
+        .summary-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .summary-table th, .summary-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--color-border); }
+        .summary-table th { font-weight: 600; color: var(--color-text-light); font-size: 0.75rem; text-transform: uppercase; }
+        .summary-table tr:last-child td { border-bottom: none; }
+        .summary-table td:last-child { text-align: right; font-weight: 700; }
+        #treatmentResultTable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        #treatmentResultTable th, #treatmentResultTable td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); white-space: normal; }
+        #treatmentResultTable th { background-color: var(--color-bg); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-light); }
+        #treatmentResultTable tbody tr:nth-child(even) { background-color: #F8FAFC; }
+        #treatmentResultTable tbody tr:hover { background-color: #F1F5F9; }
 
-        .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            color: var(--color-text);
+        /* --- ESTILOS RESPONSIVOS PARA CHECKLISTS --- */
+        @media (max-width: 768px) {
+            .romaneio-item {
+                flex-direction: column;
+            }
+            .romaneio-item__checklist {
+                width: 100%;
+                border-left: none;
+                padding-left: 0;
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
+                border-top: 1px solid var(--color-border);
+            }
+            .checklist-page .romaneio-item__top {
+                display: flex;
+                flex-direction: row;
+                gap: 1.5rem;
+                align-items: flex-start;
+            }
+            .checklist-page .romaneio-item__image {
+                max-width: 100px;
+                flex-shrink: 0;
+            }
         }
-
-        .treatment-layout {
-            display: grid;
-            grid-template-columns: 2.5fr 1fr; /* Mais espaço para a tabela principal */
-            gap: 2.5rem;
-        }
-
-        .treatment-summary-sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .summary-card {
-            background-color: var(--color-panel-bg);
-            border-radius: 8px;
-            padding: 1.5rem;
-            border: 1px solid var(--color-border);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-        }
-
-        #total-geral-summary {
-            background: linear-gradient(145deg, var(--color-accent-primary), #14B8A6);
-            color: white;
-            text-align: center;
-        }
-
-        #total-geral-summary .total-label {
-            font-size: 1rem;
-            font-weight: 500;
-            opacity: 0.9;
-            margin-bottom: 0.5rem;
-        }
-
-        #total-geral-summary .total-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .summary-card__title {
-            font-size: 1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--color-accent-secondary);
-        }
-
-        .table-wrapper--condensed {
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        .summary-table th, .summary-table td {
-            padding: 0.5rem;
-            text-align: left;
-            border-bottom: 1px solid var(--color-border);
-        }
-        .summary-table th {
-            font-weight: 600;
-            color: var(--color-text-light);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-        }
-        .summary-table tr:last-child td {
-            border-bottom: none;
-        }
-        .summary-table td:last-child {
-            text-align: right;
-            font-weight: 700;
-        }
-
-        #treatmentResultTable {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-        #treatmentResultTable th, #treatmentResultTable td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--color-border);
-            white-space: normal; /* Permite quebra de linha */
-        }
-        #treatmentResultTable th {
-            background-color: var(--color-bg);
-            font-weight: 600;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--color-text-light);
-        }
-        #treatmentResultTable tbody tr:nth-child(even) {
-            background-color: #F8FAFC;
-        }
-        #treatmentResultTable tbody tr:hover {
-            background-color: #F1F5F9;
-        }
-
 
         @media (max-width: 1100px) {
             .treatment-layout {
@@ -290,10 +210,6 @@
         </div>
     </div>
     
-    <div id="production-item-view" class="view">
-        <!-- Conteúdo do checklist interativo de produção será injetado aqui -->
-    </div>
-
     <div id="romaneio-checklist-view" class="view">
         <!-- Conteúdo do checklist interativo de romaneio será injetado aqui -->
     </div>
@@ -435,7 +351,6 @@
         // --- CONTROLE DE NAVEGAÇÃO E MODAIS ---
         const mainContainer = document.querySelector('.app-container');
         const clientsView = document.getElementById('clients-view');
-        const itemView = document.getElementById('production-item-view');
         const romaneioChecklistView = document.getElementById('romaneio-checklist-view');
         const productionChecklistView = document.getElementById('production-checklist-view');
         const configModal = document.getElementById('configModal');
@@ -445,14 +360,12 @@
         function showMainView() {
             mainContainer.style.display = 'block';
             clientsView.style.display = 'none';
-            itemView.style.display = 'none';
             romaneioChecklistView.style.display = 'none';
             productionChecklistView.style.display = 'none';
         }
         function showClientsView() {
             mainContainer.style.display = 'none';
             clientsView.style.display = 'block';
-            itemView.style.display = 'none';
             romaneioChecklistView.style.display = 'none';
             productionChecklistView.style.display = 'none';
             loadClientsList();
@@ -759,11 +672,11 @@
                             <td class="data-table__td">${client.name}</td>
                             <td class="data-table__td">
                                 <div style="display: flex; gap: 0.5rem; justify-content: flex-start;">
-                                    <button class="btn btn--primary" onclick="showProductionItemView('${clientId}')">Ver Ordem</button>
+                                    <button class="btn btn--primary" onclick="openProductionChecklistInNewTab('${clientId}')">Ver Ordem</button>
                                     <button class="btn btn--success" onclick="showItemTreatmentView('${clientId}')">Tratar Itens</button>
                                     <button class="btn btn--success" style="background-color: #5a67d8;" onclick="generateDocument('${clientId}', 'producao')">Produção</button>
                                     <button class="btn btn--secondary" onclick="generateDocument('${clientId}', 'romaneio')">Romaneio</button>
-                                    <button class="btn btn--warning btn--icon" title="Compartilhar Link" onclick="shareOrderLink('${clientId}')"><i data-feather="share-2"></i></button>
+                                    <button class="btn btn--warning btn--icon" title="Compartilhar Link" onclick="shareProductionChecklistLink('${clientId}')"><i data-feather="share-2"></i></button>
                                 </div>
                             </td>`;
                         listBody.appendChild(row);
@@ -775,11 +688,6 @@
             });
         }
         
-        function shareOrderLink(clientId) {
-            const shareUrl = `${window.location.href.split('#')[0]}#order=${clientId}`;
-            navigator.clipboard.writeText(shareUrl).then(() => alert('Link copiado!'));
-        }
-
         // --- LÓGICA DE GERAÇÃO DE DOCUMENTOS ---
         async function generateDocument(clientId, mode) {
             try {
@@ -923,186 +831,6 @@
             document.getElementById('romaneioModal').style.display = 'flex';
         }
         
-        // --- LÓGICA DO CHECKLIST INTERATIVO "VER ORDEM" ---
-        async function showProductionItemView(clientId) {
-            itemView.style.display = 'block';
-            mainContainer.style.display = 'none';
-            clientsView.style.display = 'none';
-            romaneioChecklistView.style.display = 'none';
-            productionChecklistView.style.display = 'none';
-            
-            itemView.innerHTML = '<div class="view__content"><h2>Carregando dados da ordem...</h2></div>';
-
-            try {
-                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
-                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
-                    database.ref('dados/producao').once('value'),
-                    database.ref('dados/producaoPecas').once('value')
-                ]);
-
-                const clientData = clientSnapshot.val();
-                if (!clientData) { itemView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
-
-                const productionRules = [];
-                const rulesData = rulesSnapshot.val();
-                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => productionRules.push({id, ...data}));
-
-                const productionPartRules = [];
-                const partRulesData = partRulesSnapshot.val();
-                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
-
-                let contentHTML = `<div class="view__content">
-                                        <h2 class="view__title">Acompanhamento: ${clientData.name}</h2>
-                                        <button class="btn btn--secondary" style="margin-bottom: 2rem; max-width: 200px;" onclick="showClientsView()"><i data-feather="arrow-left"></i> <span>Voltar para Clientes</span></button>
-                                       </div>`;
-                
-                const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
-                const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
-                const codeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
-                const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
-                
-                const tableData = clientData.spreadsheetData.slice(tableHeaderRowIndex + 1);
-                tableData.forEach((rowData, index) => {
-                    const itemCode = String(rowData[codeColumnIndex] || '').trim().toUpperCase();
-                    if (!itemCode) return;
-
-                    const itemPos = String(rowData[0] || index + 1);
-                    const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
-                    
-                    const imageMapping = { PCR: 'pcr.png', JCR: 'jcr.png', PGR: 'pgr.png', FIX: 'fix.png', ABT: 'abt.png', IPC: 'ipc.png', IJC: 'ijc.png', PIV: 'piv.png', MAX: 'max.png' };
-                    let imageHTML = '';
-                    for (const key in imageMapping) {
-                        if (itemCode.includes(key)) {
-                            imageHTML = `<img src="${imageMapping[key]}" class="conference-item__image" alt="${key}">`;
-                            break;
-                        }
-                    }
-
-                    let combinedChecklist = [];
-                    productionPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
-                    productionRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
-
-                    let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist Interativo</h4>`;
-                    if(combinedChecklist.length > 0) {
-                        combinedChecklist.forEach((checkItem, checkIndex) => {
-                            const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
-                            const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                            checklistHTML += `
-                                <div class="interactive-checklist-item">
-                                    <label for="${checkId}">
-                                        <input type="checkbox" id="${checkId}" onchange="updateProductionChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
-                                        <span>${checkItem.text}</span>
-                                    </label>
-                                </div>`;
-                        });
-                    }
-                    
-                    contentHTML += `
-                        <div class="conference-item view__content">
-                            <div class="conference-item__image-wrapper">${imageHTML}</div>
-                            <div class="conference-item__info">
-                                <p class="conference-item__pos">Pos. ${itemPos}</p>
-                                <p class="conference-item__code">${itemCode}</p>
-                                <p class="conference-item__desc">${itemDesc}</p>
-                            </div>
-                            <div class="conference-item__checklist">${checklistHTML}</div>
-                        </div>`;
-                });
-                itemView.innerHTML = contentHTML;
-                feather.replace();
-                
-                database.ref(`dados/producao_checklist_status/${clientId}`).on('value', statusSnapshot => {
-                    const statuses = statusSnapshot.val();
-                    if(statuses) {
-                        Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
-                            Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
-                                if(itemRow) {
-                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
-                                    let tempCombinedChecklist = [];
-                                    productionPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push(i)));
-                                    productionRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push({ ...i, quantity: 1 })));
-                                    
-                                    const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
-                                    if(checkIndex !== -1) {
-                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
-                                        const checkId = `check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                                        const checkbox = document.getElementById(checkId);
-                                        if (checkbox && checkbox.checked !== isChecked) {
-                                            checkbox.checked = isChecked;
-                                        }
-                                    }
-                                }
-                            });
-                        });
-                    }
-                });
-            } catch (error) {
-                console.error("Erro ao carregar ordem:", error);
-                itemView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar a ordem.</h2></div>';
-            }
-        }
-        
-        // --- LÓGICA DE ANÁLISE DE TABELA ---
-        async function analyzeCurrentTable() {
-            const analysisResultContainer = document.getElementById('analysisResult');
-            analysisResultContainer.innerHTML = 'Analisando...';
-        
-            if (fullSpreadsheetData.length === 0) {
-                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Nenhuma tabela para analisar. Carregue uma planilha primeiro.</p>';
-                return;
-            }
-        
-            try {
-                const [rulesSnapshot, partRulesSnapshot] = await Promise.all([
-                    database.ref('dados/producao').once('value'),
-                    database.ref('dados/producaoPecas').once('value')
-                ]);
-        
-                const analysisRules = [];
-                if(rulesSnapshot.val()) Object.values(rulesSnapshot.val()).forEach(data => analysisRules.push(data));
-        
-                const analysisPartRules = [];
-                if(partRulesSnapshot.val()) Object.values(partRulesSnapshot.val()).forEach(data => analysisPartRules.push(data));
-        
-                const tableHeaderRowIndex = fullSpreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
-                const header = fullSpreadsheetData[tableHeaderRowIndex];
-                const codeColIndex = header.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
-
-                if (codeColIndex === -1) {
-                    analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Coluna "CÓDIGO" não encontrada na tabela.</p>';
-                    return;
-                }
-        
-                analysisResultContainer.innerHTML = ''; 
-                const dataRows = fullSpreadsheetData.slice(tableHeaderRowIndex + 1);
-        
-                dataRows.forEach((row, rowIndex) => {
-                    const itemCode = (row[codeColIndex] || '').trim().toUpperCase();
-                    if (!itemCode) return;
-        
-                    const hasCodeRule = analysisRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
-                    const hasPartRule = analysisPartRules.some(rule => itemCode.includes(rule.codigo.toUpperCase()));
-        
-                    const resultEl = document.createElement('p');
-                    resultEl.className = 'analysis-result__item';
-        
-                    if (hasCodeRule || hasPartRule) {
-                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): REGRA ENCONTRADA`;
-                        resultEl.classList.add('analysis-result__item--success');
-                    } else {
-                        resultEl.textContent = `Linha ${rowIndex + 1} (Código: ${itemCode}): Nenhuma regra encontrada`;
-                        resultEl.classList.add('analysis-result__item--fail');
-                    }
-                    analysisResultContainer.appendChild(resultEl);
-                });
-        
-            } catch (error) {
-                console.error("Erro ao analisar tabela:", error);
-                analysisResultContainer.innerHTML = '<p class="analysis-result__item analysis-result__item--fail">Ocorreu um erro durante a análise.</p>';
-            }
-        }
-
         // --- LÓGICA DE TRATAMENTO DE ITENS (REMODELADA) ---
         function getCodigo(texto) {
             const str = texto.toLowerCase();
@@ -1223,64 +951,69 @@
             window.open(checklistUrl, '_blank');
         }
 
-        function shareRomaneioLink(clientId) {
+        function shareRomaneioChecklistLink(clientId) {
             const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de romaneio copiado!'));
         }
 
-        function shareProductionChecklistLink(clientId) {
+        function shareProducaoChecklistLink(clientId) {
             const shareUrl = `${window.location.href.split('#')[0]}#production-checklist=${clientId}`;
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de produção copiado!'));
         }
 
-        function updateProductionChecklistStatus(clientId, itemPos, itemText, isChecked) {
-            database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
+        function updateProducaoChecklistStatus(clientId, itemPos, itemText, checkIndex, isChecked) {
+            const path = `dados/producao_checklist_status/${clientId}/${itemPos}/${itemText}/${checkIndex}`;
+            database.ref(path).set(isChecked);
         }
 
-        function updateRomaneioChecklistStatus(clientId, itemPos, itemText, isChecked) {
-            database.ref(`dados/romaneio_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
+        function updateRomaneioChecklistStatus(clientId, itemPos, itemText, checkIndex, isChecked) {
+            const path = `dados/romaneio_checklist_status/${clientId}/${itemPos}/${itemText}/${checkIndex}`;
+            database.ref(path).set(isChecked);
         }
 
-        async function showRomaneioChecklistView(clientId) {
-            mainContainer.style.display = 'none';
-            clientsView.style.display = 'none';
-            itemView.style.display = 'none';
-            productionChecklistView.style.display = 'none';
-            romaneioChecklistView.style.display = 'block';
+        async function showChecklistView(mode, clientId) {
+            const viewEl = mode === 'producao' ? productionChecklistView : romaneioChecklistView;
+            const otherViews = [mainContainer, clientsView, (mode === 'producao' ? romaneioChecklistView : productionChecklistView)];
             
-            romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Carregando checklist do romaneio...</h2></div>';
+            otherViews.forEach(v => v.style.display = 'none');
+            viewEl.style.display = 'block';
+            viewEl.innerHTML = `<div class="view__content"><h2>Carregando checklist de ${mode}...</h2></div>`;
 
             try {
                 const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
                     database.ref(`dados/producao_clientes/${clientId}`).once('value'),
-                    database.ref('dados/romaneio').once('value'),
-                    database.ref('dados/romaneioPecas').once('value')
+                    database.ref(`dados/${mode}`).once('value'),
+                    database.ref(`dados/${mode}Pecas`).once('value')
                 ]);
 
                 const clientData = clientSnapshot.val();
-                if (!clientData) { romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
+                if (!clientData) {
+                    viewEl.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>';
+                    return;
+                }
 
-                const romaneioRules = [];
-                const rulesData = rulesSnapshot.val();
-                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => romaneioRules.push({id, ...data}));
+                const rules = [];
+                if (rulesSnapshot.val()) Object.entries(rulesSnapshot.val()).forEach(([id, data]) => rules.push({ id, ...data }));
+                
+                const partRules = [];
+                if (partRulesSnapshot.val()) Object.entries(partRulesSnapshot.val()).forEach(([id, data]) => partRules.push({ id, ...data }));
 
-                const romaneioPartRules = [];
-                const partRulesData = partRulesSnapshot.val();
-                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => romaneioPartRules.push({id, ...data}));
+                const title = mode === 'producao' ? 'Produção' : 'Romaneio';
+                const functionNamePrefix = title;
 
                 let contentHTML = `
                     <div class="view__content view__content--large">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                            <h2 class="view__title" style="margin-bottom: 0;">Checklist Romaneio: ${clientData.name}</h2>
-                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareRomaneioLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
+                            <h2 class="view__title" style="margin-bottom: 0;">Checklist ${title}: ${clientData.name}</h2>
+                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="share${functionNamePrefix}ChecklistLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
                         </div>
-                        <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--color-border);">
                     </div>`;
-                
+
                 const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
                 const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
                 const codeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
                 const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+                const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
                 
                 const tableData = clientData.spreadsheetData.slice(tableHeaderRowIndex + 1);
                 tableData.forEach((rowData, index) => {
@@ -1289,240 +1022,96 @@
 
                     const itemPos = String(rowData[0] || index + 1);
                     const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
-                    
-                    let combinedChecklist = [];
-                    romaneioPartRules
-                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                        .forEach(r => r.checklist.forEach(i => {
-                            if (i && i.text) combinedChecklist.push(i);
-                        }));
-                    romaneioRules
-                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                        .forEach(r => r.checklist.forEach(i => {
-                            if (i && i.text) combinedChecklist.push({ ...i, quantity: 1 });
-                        }));
+                    const itemTipo = tipoColumnIndex !== -1 ? String(rowData[tipoColumnIndex] || '') : '';
 
+                    let combinedChecklist = [];
+                    partRules.filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist)).forEach(r => r.checklist.forEach(i => { if (i && i.text) combinedChecklist.push(i); }));
+                    rules.filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist)).forEach(r => r.checklist.forEach(i => { if (i && i.text) combinedChecklist.push({ ...i, quantity: 1 }); }));
 
                     if (combinedChecklist.length > 0) {
-                        let checklistHTML = `<h4 class="romaneio-item__checklist-title">Itens de Conferência</h4>`;
-                        combinedChecklist.forEach((checkItem, checkIndex) => {
+                        let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist de ${title}</h4>`;
+                        combinedChecklist.forEach((checkItem, checkItemIndex) => {
                             if (checkItem && checkItem.text) {
-                                const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
-                                const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                let boxesHTML = '';
+                                for (let i = 0; i < (checkItem.quantity || 1); i++) {
+                                    const checkId = `${mode}-check-${clientId}-${itemPos}-${checkItemIndex}-${i}`;
+                                    boxesHTML += `<input type="checkbox" id="${checkId}" onchange="update${functionNamePrefix}ChecklistStatus('${clientId}', '${itemPos}', '${checkItemIndex}', ${i}, this.checked)">`;
+                                }
                                 checklistHTML += `
-                                    <div class="interactive-checklist-item">
-                                        <label for="${checkId}">
-                                            <input type="checkbox" id="${checkId}" onchange="updateRomaneioChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
-                                            <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
-                                        </label>
+                                    <div class="romaneio-item__checklist-item">
+                                        <div><span class="romaneio-item__symbol">${checkItem.symbol || '■'}</span><span>${checkItem.text}</span></div>
+                                        <div class="romaneio-item__checkbox-group">${boxesHTML}</div>
                                     </div>`;
                             }
                         });
-                        
+
+                        const imageMapping = { PCR: 'pcr.png', JCR: 'jcr.png', PGR: 'pgr.png', FIX: 'fix.png', ABT: 'abt.png', IPC: 'ipc.png', IJC: 'ijc.png', PIV: 'piv.png', MAX: 'max.png' };
+                        let imageHTML = '';
+                        for (const key in imageMapping) {
+                            if (itemCode.includes(key)) {
+                                imageHTML = `<img src="${imageMapping[key]}" class="romaneio-item__image" alt="${key}">`;
+                                break;
+                            }
+                        }
+
                         contentHTML += `
-                            <div class="conference-item view__content view__content--large">
-                                <div class="conference-item__info">
-                                    <p class="conference-item__pos">Pos. ${itemPos}</p>
-                                    <p class="conference-item__code">${itemCode}</p>
-                                    <p class="conference-item__desc">${itemDesc}</p>
+                            <div class="romaneio-item view__content view__content--large checklist-page" style="margin-top: 1rem; padding-top: 1rem;">
+                                <div class="romaneio-item__top">
+                                    <div class="romaneio-item__info">
+                                        <p class="romaneio-item__pos">Pos. ${itemPos}</p>
+                                        <p class="romaneio-item__code">${itemCode}</p>
+                                        <p class="romaneio-item__desc">${itemDesc}</p>
+                                        ${itemTipo ? `<p class="romaneio-item__tipo">${itemTipo}</p>` : ''}
+                                        ${imageHTML}
+                                    </div>
                                 </div>
-                                <div class="conference-item__checklist">${checklistHTML}</div>
+                                <div class="romaneio-item__checklist">${checklistHTML}</div>
                             </div>`;
                     }
                 });
-                romaneioChecklistView.innerHTML = contentHTML;
+                viewEl.innerHTML = contentHTML;
                 feather.replace();
                 
-                database.ref(`dados/romaneio_checklist_status/${clientId}`).on('value', statusSnapshot => {
+                database.ref(`dados/${mode}_checklist_status/${clientId}`).on('value', statusSnapshot => {
                     const statuses = statusSnapshot.val();
                     if(statuses) {
                         Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
-                            Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
-                                if(itemRow) {
-                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
-                                    let tempCombinedChecklist = [];
-                                    romaneioPartRules
-                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                                        .forEach(r => r.checklist.forEach(i => {
-                                            if (i && i.text) tempCombinedChecklist.push(i);
-                                        }));
-                                    romaneioRules
-                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                                        .forEach(r => r.checklist.forEach(i => {
-                                            if (i && i.text) tempCombinedChecklist.push({ ...i, quantity: 1 });
-                                        }));
-                                    
-                                    const checkIndex = tempCombinedChecklist.findIndex(item => item && item.text === itemText);
-                                    if(checkIndex !== -1) {
-                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
-                                        const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                                        const checkbox = document.getElementById(checkId);
-                                        if (checkbox && checkbox.checked !== isChecked) {
-                                            checkbox.checked = isChecked;
-                                        }
+                            Object.entries(itemStatuses).forEach(([checkItemIndex, checkStatuses]) => {
+                                Object.entries(checkStatuses).forEach(([checkIndex, isChecked]) => {
+                                    const checkId = `${mode}-check-${clientId}-${itemPos}-${checkItemIndex}-${checkIndex}`;
+                                    const checkbox = document.getElementById(checkId);
+                                    if (checkbox && checkbox.checked !== isChecked) {
+                                        checkbox.checked = isChecked;
                                     }
-                                }
+                                });
                             });
                         });
                     }
                 });
             } catch (error) {
-                console.error("Erro ao carregar checklist do romaneio:", error);
-                romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar o checklist.</h2></div>';
+                console.error(`Erro ao carregar checklist de ${mode}:`, error);
+                viewEl.innerHTML = `<div class="view__content"><h2>Ocorreu um erro ao carregar o checklist.</h2></div>`;
             }
         }
 
-        async function showProductionChecklistView(clientId) {
-            mainContainer.style.display = 'none';
-            clientsView.style.display = 'none';
-            itemView.style.display = 'none';
-            romaneioChecklistView.style.display = 'none';
-            productionChecklistView.style.display = 'block';
-            
-            productionChecklistView.innerHTML = '<div class="view__content"><h2>Carregando checklist de produção...</h2></div>';
-
-            try {
-                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
-                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
-                    database.ref('dados/producao').once('value'),
-                    database.ref('dados/producaoPecas').once('value')
-                ]);
-
-                const clientData = clientSnapshot.val();
-                if (!clientData) { productionChecklistView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
-
-                const productionRules = [];
-                const rulesData = rulesSnapshot.val();
-                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => productionRules.push({id, ...data}));
-
-                const productionPartRules = [];
-                const partRulesData = partRulesSnapshot.val();
-                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
-
-                let contentHTML = `
-                    <div class="view__content view__content--large">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                            <h2 class="view__title" style="margin-bottom: 0;">Checklist Produção: ${clientData.name}</h2>
-                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareProductionChecklistLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
-                        </div>
-                        <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--color-border);">
-                    </div>`;
-                
-                const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
-                const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
-                const codeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
-                const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
-                
-                const tableData = clientData.spreadsheetData.slice(tableHeaderRowIndex + 1);
-                tableData.forEach((rowData, index) => {
-                    const itemCode = String(rowData[codeColumnIndex] || '').trim().toUpperCase();
-                    if (!itemCode) return;
-
-                    const itemPos = String(rowData[0] || index + 1);
-                    const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
-                    
-                    let combinedChecklist = [];
-                    productionPartRules
-                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                        .forEach(r => r.checklist.forEach(i => {
-                            if (i && i.text) combinedChecklist.push(i);
-                        }));
-                    productionRules
-                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                        .forEach(r => r.checklist.forEach(i => {
-                            if (i && i.text) combinedChecklist.push({ ...i, quantity: 1 });
-                        }));
-
-
-                    if (combinedChecklist.length > 0) {
-                        let checklistHTML = `<h4 class="romaneio-item__checklist-title">Itens de Produção</h4>`;
-                        combinedChecklist.forEach((checkItem, checkIndex) => {
-                            if (checkItem && checkItem.text) {
-                                const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
-                                const checkId = `prod-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                                checklistHTML += `
-                                    <div class="interactive-checklist-item">
-                                        <label for="${checkId}">
-                                            <input type="checkbox" id="${checkId}" onchange="updateProductionChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
-                                            <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
-                                        </label>
-                                    </div>`;
-                            }
-                        });
-                        
-                        contentHTML += `
-                            <div class="conference-item view__content view__content--large">
-                                <div class="conference-item__info">
-                                    <p class="conference-item__pos">Pos. ${itemPos}</p>
-                                    <p class="conference-item__code">${itemCode}</p>
-                                    <p class="conference-item__desc">${itemDesc}</p>
-                                </div>
-                                <div class="conference-item__checklist">${checklistHTML}</div>
-                            </div>`;
-                    }
-                });
-                productionChecklistView.innerHTML = contentHTML;
-                feather.replace();
-                
-                database.ref(`dados/producao_checklist_status/${clientId}`).on('value', statusSnapshot => {
-                    const statuses = statusSnapshot.val();
-                    if(statuses) {
-                        Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
-                            Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
-                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
-                                if(itemRow) {
-                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
-                                    let tempCombinedChecklist = [];
-                                    productionPartRules
-                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                                        .forEach(r => r.checklist.forEach(i => {
-                                            if (i && i.text) tempCombinedChecklist.push(i);
-                                        }));
-                                    productionRules
-                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
-                                        .forEach(r => r.checklist.forEach(i => {
-                                            if (i && i.text) tempCombinedChecklist.push({ ...i, quantity: 1 });
-                                        }));
-                                    
-                                    const checkIndex = tempCombinedChecklist.findIndex(item => item && item.text === itemText);
-                                    if(checkIndex !== -1) {
-                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
-                                        const checkId = `prod-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                                        const checkbox = document.getElementById(checkId);
-                                        if (checkbox && checkbox.checked !== isChecked) {
-                                            checkbox.checked = isChecked;
-                                        }
-                                    }
-                                }
-                            });
-                        });
-                    }
-                });
-            } catch (error) {
-                console.error("Erro ao carregar checklist de produção:", error);
-                productionChecklistView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar o checklist.</h2></div>';
-            }
-        }
+        const showRomaneioChecklistView = (clientId) => showChecklistView('romaneio', clientId);
+        const showProductionChecklistView = (clientId) => showChecklistView('producao', clientId);
 
 
         // --- INICIALIZAÇÃO ---
         window.addEventListener('load', () => {
-            if (window.location.hash && window.location.hash.startsWith('#order=')) {
-                const clientId = window.location.hash.substring(6);
-                if (clientId) {
-                    showProductionItemView(clientId);
-                }
-            } else if (window.location.hash && window.location.hash.startsWith('#romaneio-checklist=')) {
-                const clientId = window.location.hash.substring(19);
-                if (clientId) {
-                    showRomaneioChecklistView(clientId);
-                }
-            } else if (window.location.hash && window.location.hash.startsWith('#production-checklist=')) {
-                const clientId = window.location.hash.substring(22);
-                if (clientId) {
-                    showProductionChecklistView(clientId);
-                }
+            document.querySelectorAll('.app-container, .view').forEach(el => el.style.display = 'none');
+
+            const hash = window.location.hash;
+            const romaneioPrefix = '#romaneio-checklist=';
+            const productionPrefix = '#production-checklist=';
+
+            if (hash.startsWith(romaneioPrefix)) {
+                const clientId = hash.substring(romaneioPrefix.length);
+                if (clientId) showRomaneioChecklistView(clientId);
+            } else if (hash.startsWith(productionPrefix)) {
+                const clientId = hash.substring(productionPrefix.length);
+                if (clientId) showProductionChecklistView(clientId);
             }
             else {
                  showMainView();
