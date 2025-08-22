@@ -135,6 +135,19 @@
         #treatmentResultTable tbody tr:nth-child(even) { background-color: #F8FAFC; }
         #treatmentResultTable tbody tr:hover { background-color: #F1F5F9; }
 
+        /* --- [INÍCIO] ESTILOS CORRIGIDOS PARA O CHECKLIST ONLINE --- */
+        .checklist-page .romaneio-item__info {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+        .checklist-page .romaneio-item__image {
+            max-width: 120px;
+            flex-shrink: 0;
+            margin-top: 0;
+        }
+        /* --- [FIM] ESTILOS CORRIGIDOS PARA O CHECKLIST ONLINE --- */
+
         /* --- ESTILOS RESPONSIVOS PARA CHECKLISTS --- */
         @media (max-width: 768px) {
             .romaneio-item {
@@ -297,12 +310,12 @@
                     <h3 class="section-title">Lista de Itens Processados</h3>
                     <div class="table-wrapper">
                         <table id="treatmentResultTable" class="data-table">
-                             <thead>
-                                <tr>
-                                    <th>TIPO</th><th>ITENS</th><th>DESCRIÇÃO</th><th>AMBIENTE</th><th>COR</th><th>PRODUTO</th><th>CATEGORIA</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
+                              <thead>
+                                  <tr>
+                                      <th>TIPO</th><th>ITENS</th><th>DESCRIÇÃO</th><th>AMBIENTE</th><th>COR</th><th>PRODUTO</th><th>CATEGORIA</th>
+                                  </tr>
+                              </thead>
+                              <tbody></tbody>
                         </table>
                     </div>
                 </div>
@@ -453,8 +466,8 @@
                         const checklistHTML = rule.checklist.map(item => `<li>${item.symbol || '■'} ${item.text} (x${item.quantity})</li>`).join('');
                         ruleEl.innerHTML = `
                              <div class="rule-item__info">
-                                <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
-                                <ul class="rule-item__checklist">${checklistHTML}</ul>
+                                 <p class="rule-item__code">Código contém: "${rule.codigo}"</p>
+                                 <ul class="rule-item__checklist">${checklistHTML}</ul>
                             </div>
                             <div class="rule-item__actions">
                                 <button onclick="editPartRule('${key}')" class="btn btn--secondary"><i data-feather="edit-2"></i></button>
@@ -621,7 +634,7 @@
             const table = document.createElement('table');
             table.className = "data-table";
             table.innerHTML = `<thead><tr>${header.map(h => `<th class="data-table__th">${h}</th>`).join('')}</tr></thead>
-                                     <tbody>${tableData.map(rowData => `<tr>${rowData.map(cell => `<td class="data-table__td">${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
+                                         <tbody>${tableData.map(rowData => `<tr>${rowData.map(cell => `<td class="data-table__td">${cell}</td>`).join('')}</tr>`).join('')}</tbody>`;
             tableContainer.appendChild(table);
         }
 
@@ -951,12 +964,7 @@
             window.open(checklistUrl, '_blank');
         }
 
-        function shareRomaneioChecklistLink(clientId) {
-            const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
-            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de romaneio copiado!'));
-        }
-
-        function shareProducaoChecklistLink(clientId) {
+        function shareProductionChecklistLink(clientId) {
             const shareUrl = `${window.location.href.split('#')[0]}#production-checklist=${clientId}`;
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de produção copiado!'));
         }
@@ -1053,20 +1061,22 @@
                                 break;
                             }
                         }
-
+                        
+                        // --- [INÍCIO] ESTRUTURA HTML CORRIGIDA ---
                         contentHTML += `
                             <div class="romaneio-item view__content view__content--large checklist-page" style="margin-top: 1rem; padding-top: 1rem;">
-                                <div class="romaneio-item__top">
-                                    <div class="romaneio-item__info">
+                                <div class="romaneio-item__info">
+                                    ${imageHTML}
+                                    <div>
                                         <p class="romaneio-item__pos">Pos. ${itemPos}</p>
                                         <p class="romaneio-item__code">${itemCode}</p>
                                         <p class="romaneio-item__desc">${itemDesc}</p>
                                         ${itemTipo ? `<p class="romaneio-item__tipo">${itemTipo}</p>` : ''}
-                                        ${imageHTML}
                                     </div>
                                 </div>
                                 <div class="romaneio-item__checklist">${checklistHTML}</div>
                             </div>`;
+                        // --- [FIM] ESTRUTURA HTML CORRIGIDA ---
                     }
                 });
                 viewEl.innerHTML = contentHTML;
