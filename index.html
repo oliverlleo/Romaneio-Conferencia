@@ -297,6 +297,10 @@
     <div id="romaneio-checklist-view" class="view">
         <!-- Conteúdo do checklist interativo de romaneio será injetado aqui -->
     </div>
+    
+    <div id="production-checklist-view" class="view">
+        <!-- Conteúdo do checklist interativo de produção (compartilhável) será injetado aqui -->
+    </div>
 
     <!-- MODAL DE CONFIGURAÇÕES -->
     <div id="configModal" class="modal">
@@ -433,6 +437,7 @@
         const clientsView = document.getElementById('clients-view');
         const itemView = document.getElementById('production-item-view');
         const romaneioChecklistView = document.getElementById('romaneio-checklist-view');
+        const productionChecklistView = document.getElementById('production-checklist-view');
         const configModal = document.getElementById('configModal');
         const analysisModal = document.getElementById('analysisModal');
         const treatmentModal = document.getElementById('treatmentModal');
@@ -442,12 +447,14 @@
             clientsView.style.display = 'none';
             itemView.style.display = 'none';
             romaneioChecklistView.style.display = 'none';
+            productionChecklistView.style.display = 'none';
         }
         function showClientsView() {
             mainContainer.style.display = 'none';
             clientsView.style.display = 'block';
             itemView.style.display = 'none';
             romaneioChecklistView.style.display = 'none';
+            productionChecklistView.style.display = 'none';
             loadClientsList();
         }
         
@@ -818,6 +825,8 @@
             const tipoColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase() === 'TIPO');
 
             const title = mode === 'producao' ? 'Relatório de Produção' : 'Romaneio de Conferência';
+            const checklistTitle = mode === 'producao' ? 'Checklist de Produção' : 'Checklist de Conferência';
+
             const spreadsheetHeaderData = spreadsheetData.slice(0, tableHeaderRowIndex);
             spreadsheetHeaderData.forEach(row => {
                 const filteredCells = row.filter(cell => cell !== null && String(cell).trim() !== '');
@@ -845,7 +854,7 @@
                 documentPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
                 documentRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
 
-                let checklistHTML = `<h4 class="romaneio-item__checklist-title">Checklist de Conferência</h4>`;
+                let checklistHTML = `<h4 class="romaneio-item__checklist-title">${checklistTitle}</h4>`;
                 if (combinedChecklist.length > 0) {
                     combinedChecklist.forEach(checkItem => {
                         let boxesHTML = '';
@@ -902,10 +911,13 @@
             romaneioItemsContainer.appendChild(signatureSection);
             
             const romaneioFooter = document.querySelector('#romaneioModal .romaneio-footer');
-            romaneioFooter.innerHTML = `
-                <button onclick="window.print()" class="btn btn--primary" style="flex-grow: 0;"><i data-feather="printer"></i><span>Imprimir</span></button>
-                <button onclick="openChecklistInNewTab('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>
-            `;
+            let footerHTML = `<button onclick="window.print()" class="btn btn--primary" style="flex-grow: 0;"><i data-feather="printer"></i><span>Imprimir</span></button>`;
+            if (mode === 'romaneio') {
+                footerHTML += `<button onclick="openChecklistInNewTab('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>`;
+            } else if (mode === 'producao') {
+                 footerHTML += `<button onclick="openProductionChecklistInNewTab('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>`;
+            }
+            romaneioFooter.innerHTML = footerHTML;
             feather.replace();
 
             document.getElementById('romaneioModal').style.display = 'flex';
@@ -917,6 +929,7 @@
             mainContainer.style.display = 'none';
             clientsView.style.display = 'none';
             romaneioChecklistView.style.display = 'none';
+            productionChecklistView.style.display = 'none';
             
             itemView.innerHTML = '<div class="view__content"><h2>Carregando dados da ordem...</h2></div>';
 
@@ -977,7 +990,7 @@
                             checklistHTML += `
                                 <div class="interactive-checklist-item">
                                     <label for="${checkId}">
-                                        <input type="checkbox" id="${checkId}" onchange="updateChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
+                                        <input type="checkbox" id="${checkId}" onchange="updateProductionChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
                                         <span>${checkItem.text}</span>
                                     </label>
                                 </div>`;
@@ -1028,9 +1041,6 @@
                 console.error("Erro ao carregar ordem:", error);
                 itemView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar a ordem.</h2></div>';
             }
-        }
-        function updateChecklistStatus(clientId, itemPos, itemText, isChecked) {
-            database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
         
         // --- LÓGICA DE ANÁLISE DE TABELA ---
@@ -1200,16 +1210,31 @@
             treatmentModal.style.display = 'flex';
         }
 
-        // --- NOVAS FUNÇÕES PARA CHECKLIST DE ROMANEIO ---
-        function shareRomaneioLink(clientId) {
-            const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
-            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist copiado!'));
-        }
-
+        // --- NOVAS FUNÇÕES PARA CHECKLISTS ONLINE ---
         function openChecklistInNewTab(clientId) {
             document.getElementById('romaneioModal').style.display = 'none';
             const checklistUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
             window.open(checklistUrl, '_blank');
+        }
+
+        function openProductionChecklistInNewTab(clientId) {
+            document.getElementById('romaneioModal').style.display = 'none';
+            const checklistUrl = `${window.location.href.split('#')[0]}#production-checklist=${clientId}`;
+            window.open(checklistUrl, '_blank');
+        }
+
+        function shareRomaneioLink(clientId) {
+            const shareUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
+            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de romaneio copiado!'));
+        }
+
+        function shareProductionChecklistLink(clientId) {
+            const shareUrl = `${window.location.href.split('#')[0]}#production-checklist=${clientId}`;
+            navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist de produção copiado!'));
+        }
+
+        function updateProductionChecklistStatus(clientId, itemPos, itemText, isChecked) {
+            database.ref(`dados/producao_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
 
         function updateRomaneioChecklistStatus(clientId, itemPos, itemText, isChecked) {
@@ -1220,6 +1245,7 @@
             mainContainer.style.display = 'none';
             clientsView.style.display = 'none';
             itemView.style.display = 'none';
+            productionChecklistView.style.display = 'none';
             romaneioChecklistView.style.display = 'block';
             
             romaneioChecklistView.innerHTML = '<div class="view__content"><h2>Carregando checklist do romaneio...</h2></div>';
@@ -1347,6 +1373,138 @@
             }
         }
 
+        async function showProductionChecklistView(clientId) {
+            mainContainer.style.display = 'none';
+            clientsView.style.display = 'none';
+            itemView.style.display = 'none';
+            romaneioChecklistView.style.display = 'none';
+            productionChecklistView.style.display = 'block';
+            
+            productionChecklistView.innerHTML = '<div class="view__content"><h2>Carregando checklist de produção...</h2></div>';
+
+            try {
+                const [clientSnapshot, rulesSnapshot, partRulesSnapshot] = await Promise.all([
+                    database.ref(`dados/producao_clientes/${clientId}`).once('value'),
+                    database.ref('dados/producao').once('value'),
+                    database.ref('dados/producaoPecas').once('value')
+                ]);
+
+                const clientData = clientSnapshot.val();
+                if (!clientData) { productionChecklistView.innerHTML = '<div class="view__content"><h2>Erro: Cliente não encontrado.</h2></div>'; return; }
+
+                const productionRules = [];
+                const rulesData = rulesSnapshot.val();
+                if(rulesData) Object.entries(rulesData).forEach(([id, data]) => productionRules.push({id, ...data}));
+
+                const productionPartRules = [];
+                const partRulesData = partRulesSnapshot.val();
+                if(partRulesData) Object.entries(partRulesData).forEach(([id, data]) => productionPartRules.push({id, ...data}));
+
+                let contentHTML = `
+                    <div class="view__content">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                            <h2 class="view__title" style="margin-bottom: 0;">Checklist Produção: ${clientData.name}</h2>
+                            <button class="btn btn--warning" style="flex-grow: 0;" onclick="shareProductionChecklistLink('${clientId}')"><i data-feather="share-2"></i> <span>Copiar Link</span></button>
+                        </div>
+                        <hr style="margin: 1.5rem 0; border: 0; border-top: 1px solid var(--color-border);">
+                    </div>`;
+                
+                const tableHeaderRowIndex = clientData.spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+                const tableHeader = clientData.spreadsheetData[tableHeaderRowIndex];
+                const codeColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('CÓDIGO'));
+                const descColumnIndex = tableHeader.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
+                
+                const tableData = clientData.spreadsheetData.slice(tableHeaderRowIndex + 1);
+                tableData.forEach((rowData, index) => {
+                    const itemCode = String(rowData[codeColumnIndex] || '').trim().toUpperCase();
+                    if (!itemCode) return;
+
+                    const itemPos = String(rowData[0] || index + 1);
+                    const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
+                    
+                    let combinedChecklist = [];
+                    productionPartRules
+                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                        .forEach(r => r.checklist.forEach(i => {
+                            if (i && i.text) combinedChecklist.push(i);
+                        }));
+                    productionRules
+                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                        .forEach(r => r.checklist.forEach(i => {
+                            if (i && i.text) combinedChecklist.push({ ...i, quantity: 1 });
+                        }));
+
+
+                    if (combinedChecklist.length > 0) {
+                        let checklistHTML = `<h4 class="romaneio-item__checklist-title">Itens de Produção</h4>`;
+                        combinedChecklist.forEach((checkItem, checkIndex) => {
+                            if (checkItem && checkItem.text) {
+                                const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
+                                const checkId = `prod-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                checklistHTML += `
+                                    <div class="interactive-checklist-item">
+                                        <label for="${checkId}">
+                                            <input type="checkbox" id="${checkId}" onchange="updateProductionChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
+                                            <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
+                                        </label>
+                                    </div>`;
+                            }
+                        });
+                        
+                        contentHTML += `
+                            <div class="conference-item view__content">
+                                <div class="conference-item__info" style="flex-basis: 100%;">
+                                    <p class="conference-item__pos">Pos. ${itemPos}</p>
+                                    <p class="conference-item__code">${itemCode}</p>
+                                    <p class="conference-item__desc">${itemDesc}</p>
+                                </div>
+                                <div class="conference-item__checklist" style="flex-basis: 100%;">${checklistHTML}</div>
+                            </div>`;
+                    }
+                });
+                productionChecklistView.innerHTML = contentHTML;
+                feather.replace();
+                
+                database.ref(`dados/producao_checklist_status/${clientId}`).on('value', statusSnapshot => {
+                    const statuses = statusSnapshot.val();
+                    if(statuses) {
+                        Object.entries(statuses).forEach(([itemPos, itemStatuses]) => {
+                            Object.entries(itemStatuses).forEach(([itemText, isChecked]) => {
+                                const itemRow = tableData.find(row => (row[0] || '') == itemPos);
+                                if(itemRow) {
+                                    const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
+                                    let tempCombinedChecklist = [];
+                                    productionPartRules
+                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                                        .forEach(r => r.checklist.forEach(i => {
+                                            if (i && i.text) tempCombinedChecklist.push(i);
+                                        }));
+                                    productionRules
+                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                                        .forEach(r => r.checklist.forEach(i => {
+                                            if (i && i.text) tempCombinedChecklist.push({ ...i, quantity: 1 });
+                                        }));
+                                    
+                                    const checkIndex = tempCombinedChecklist.findIndex(item => item && item.text === itemText);
+                                    if(checkIndex !== -1) {
+                                        const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
+                                        const checkId = `prod-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                        const checkbox = document.getElementById(checkId);
+                                        if (checkbox && checkbox.checked !== isChecked) {
+                                            checkbox.checked = isChecked;
+                                        }
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Erro ao carregar checklist de produção:", error);
+                productionChecklistView.innerHTML = '<div class="view__content"><h2>Ocorreu um erro ao carregar o checklist.</h2></div>';
+            }
+        }
+
 
         // --- INICIALIZAÇÃO ---
         window.addEventListener('load', () => {
@@ -1359,6 +1517,11 @@
                 const clientId = window.location.hash.substring(20);
                 if (clientId) {
                     showRomaneioChecklistView(clientId);
+                }
+            } else if (window.location.hash && window.location.hash.startsWith('#production-checklist=')) {
+                const clientId = window.location.hash.substring(23);
+                if (clientId) {
+                    showProductionChecklistView(clientId);
                 }
             }
             else {
