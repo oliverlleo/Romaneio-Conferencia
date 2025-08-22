@@ -13,7 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
     <!-- Biblioteca PapaParse para exportar CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <!-- Fontes e Ícones -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,7 +28,7 @@
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { font-size: 16px; }
         body { font-family: var(--font-family-sans); background-color: var(--color-bg); color: var(--color-text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-        .app-container { display: none; width: 100%; max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
+        .app-container { display: none; width: 100%; max-width: 1400px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
         .app-header { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 2rem; color: var(--color-text); }
         .action-bar { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
         .status-text { text-align: center; margin: 2rem 0; color: var(--color-text-light); }
@@ -48,12 +48,12 @@
         .btn--text:hover { color: var(--color-accent-primary-hover); background-color: var(--color-bg); }
         .btn--icon { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-light); padding: 0.75rem; cursor: pointer; line-height: 1; flex-grow: 0; border-radius: 6px; }
         .btn--icon:hover { color: var(--color-accent-primary); border-color: var(--color-accent-primary); background-color: #F0FDFA; }
-        .btn--icon.btn--warning:hover { color: var(--color-warning); border-color: var(--color-warning); background-color: #FFFBEB; }
+        .btn--icon.btn--danger:hover { color: var(--color-danger); border-color: var(--color-danger); background-color: #FEE2E2; }
         .file-input { display: none; }
         .view { display: none; width: 100%; }
         .view__title { font-size: 2rem; font-weight: 700; margin-bottom: 2rem; color: var(--color-text); }
-        .view__content { max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
-        .view__content--large { max-width: 1400px; }
+        .view__content { max-width: 1400px; margin: 2rem auto; padding: 2rem; background-color: var(--color-panel-bg); border-radius: 8px; }
+        .view__content--large { max-width: 1600px; }
         .modal { display: none; position: fixed; z-index: 3000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(30, 41, 59, 0.8); align-items: center; justify-content: center; }
         .modal__content { background-color: var(--color-panel-bg); padding: 2.5rem; border-radius: 8px; width: 90%; max-width: 700px; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal__content--large { max-width: 1100px; }
@@ -77,10 +77,10 @@
         .data-table__th, .data-table__td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--color-border); white-space: nowrap; }
         .data-table tr:last-child .data-table__td { border-bottom: none; }
         .data-table__th { background-color: var(--color-bg); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-light); }
-        .rules-list { display: grid; gap: 1rem; }
-        .rule-item { background-color: var(--color-bg); padding: 1rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
-        .rule-item__info { flex-grow: 1; }
-        .rule-item__actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+        .rules-list, .generic-list { display: grid; gap: 1rem; }
+        .rule-item, .generic-list-item { background-color: var(--color-bg); padding: 1rem; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .rule-item__info, .generic-list-item__info { flex-grow: 1; }
+        .rule-item__actions, .generic-list-item__actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
         .rule-item__code { font-weight: 600; }
         .rule-item__checklist { list-style-position: inside; padding-left: 0.5rem; color: var(--color-text-light); font-size: 0.9rem; }
         .analysis-result { background-color: var(--color-bg); padding: 1rem; max-height: 60vh; overflow-y: auto; border-radius: 6px; }
@@ -109,6 +109,8 @@
         .romaneio-signatures { padding-top: 4rem; margin-top: 4rem; display: flex; justify-content: space-around; }
         .signature-line { text-align: center; }
         .signature-line > div { border-top: 1px solid var(--color-text); width: 200px; margin-bottom: 0.5rem; }
+        .config-view { display: none; }
+        .config-view.active { display: block; }
         
         /* --- ESTILOS DO MODAL DE TRATAMENTO --- */
         .treatment-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
@@ -232,7 +234,10 @@
                     <thead>
                         <tr>
                             <th class="data-table__th">Nome do Cliente</th>
-                            <th class="data-table__th" style="width: 620px;">Ações</th>
+                            <th class="data-table__th">Total pç</th>
+                            <th class="data-table__th">Andamento</th>
+                            <th class="data-table__th">Etapa</th>
+                            <th class="data-table__th">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="production-clients-list"></tbody>
@@ -251,43 +256,81 @@
 
     <!-- MODAL DE CONFIGURAÇÕES -->
     <div id="configModal" class="modal">
-        <div class="modal__content">
+        <div class="modal__content modal__content--large">
             <span class="modal__close" onclick="this.parentElement.parentElement.style.display='none'">&times;</span>
-            <h2 class="modal__title">Gerenciar Regras</h2>
+            <h2 class="modal__title">Configurações Gerais</h2>
             <div class="action-bar" style="margin-bottom: 2rem;">
-                <button id="config-mode-romaneio" class="btn btn--secondary">Regras de Romaneio</button>
-                <button id="config-mode-producao" class="btn btn--secondary">Regras de Produção</button>
+                <button onclick="showConfigView('regras')" class="btn btn--secondary">Regras</button>
+                <button onclick="showConfigView('funcionarios')" class="btn btn--secondary">Funcionários</button>
+                <button onclick="showConfigView('servicos')" class="btn btn--secondary">Serviços</button>
             </div>
-            
-            <div id="rule-form-section" class="modal__section">
-                <h3 id="rule-form-title" class="modal__subtitle">Regras de Código</h3>
-                <div class="form-grid">
-                    <input type="hidden" id="ruleId">
-                    <input type="text" id="ruleCode" placeholder="Se o código CONTÉM..." class="form-input">
-                    <div id="newChecklistContainer"></div>
-                    <button id="addChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item</button>
-                    <button id="saveRule" class="btn btn--success">Salvar Regra de Código</button>
-                    <button id="cancelEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+
+            <!-- Seção de Regras -->
+            <div id="config-view-regras" class="config-view">
+                <div class="action-bar" style="margin-bottom: 2rem;">
+                    <button id="config-mode-romaneio" class="btn btn--secondary">Regras de Romaneio</button>
+                    <button id="config-mode-producao" class="btn btn--secondary">Regras de Produção</button>
+                </div>
+                <div id="rule-form-section" class="modal__section">
+                    <h3 id="rule-form-title" class="modal__subtitle">Regras de Código</h3>
+                    <div class="form-grid">
+                        <input type="hidden" id="ruleId">
+                        <input type="text" id="ruleCode" placeholder="Se o código CONTÉM..." class="form-input">
+                        <div id="newChecklistContainer"></div>
+                        <button id="addChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item</button>
+                        <button id="saveRule" class="btn btn--success">Salvar Regra de Código</button>
+                        <button id="cancelEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+                    </div>
+                </div>
+                <div class="modal__section">
+                    <h3 class="modal__subtitle">Regras de Código Salvas</h3>
+                    <div id="rulesList" class="rules-list"></div>
+                </div>
+                <div id="part-rule-form-section" class="modal__section">
+                    <h3 id="part-rule-form-title" class="modal__subtitle">Regras de Peça</h3>
+                    <div class="form-grid">
+                        <input type="hidden" id="partRuleId">
+                        <input type="text" id="partRuleCode" placeholder="Se o código CONTÉM..." class="form-input">
+                        <div id="newPartChecklistContainer"></div>
+                        <button id="addPartChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item de peça</button>
+                        <button id="savePartRule" class="btn btn--success">Salvar Regra de Peça</button>
+                        <button id="cancelPartEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+                    </div>
+                </div>
+                 <div class="modal__section">
+                    <h3 class="modal__subtitle">Regras de Peça Salvas</h3>
+                    <div id="partRulesList" class="rules-list"></div>
                 </div>
             </div>
-            <div class="modal__section">
-                <h3 class="modal__subtitle">Regras de Código Salvas</h3>
-                <div id="rulesList" class="rules-list"></div>
-            </div>
-            <div id="part-rule-form-section" class="modal__section">
-                <h3 id="part-rule-form-title" class="modal__subtitle">Regras de Peça</h3>
-                <div class="form-grid">
-                    <input type="hidden" id="partRuleId">
-                    <input type="text" id="partRuleCode" placeholder="Se o código CONTÉM..." class="form-input">
-                    <div id="newPartChecklistContainer"></div>
-                    <button id="addPartChecklistItem" class="btn btn--text"><i data-feather="plus"></i> Adicionar item de peça</button>
-                    <button id="savePartRule" class="btn btn--success">Salvar Regra de Peça</button>
-                    <button id="cancelPartEdit" class="btn btn--secondary" style="display: none;">Cancelar Edição</button>
+
+            <!-- Seção de Funcionários -->
+            <div id="config-view-funcionarios" class="config-view">
+                <div class="modal__section" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <h3 class="modal__subtitle">Novo Funcionário</h3>
+                    <div class="form-grid" style="grid-template-columns: 1fr auto; align-items: end;">
+                        <input type="text" id="funcionarioName" placeholder="Nome do Funcionário" class="form-input">
+                        <button id="saveFuncionario" class="btn btn--success">Salvar</button>
+                    </div>
+                </div>
+                <div class="modal__section">
+                    <h3 class="modal__subtitle">Funcionários Cadastrados</h3>
+                    <div id="funcionariosList" class="generic-list"></div>
                 </div>
             </div>
-             <div class="modal__section">
-                <h3 class="modal__subtitle">Regras de Peça Salvas</h3>
-                <div id="partRulesList" class="rules-list"></div>
+
+            <!-- Seção de Serviços -->
+            <div id="config-view-servicos" class="config-view">
+                 <div class="modal__section" style="border-top: none; padding-top: 0; margin-top: 0;">
+                    <h3 class="modal__subtitle">Novo Serviço</h3>
+                    <div class="form-grid" style="grid-template-columns: 1fr auto; align-items: end;">
+                        <input type="text" id="servicoName" placeholder="Nome do Serviço (Etapa)" class="form-input">
+                        <button id="saveServico" class="btn btn--success">Salvar</button>
+                    </div>
+                </div>
+                <div class="modal__section">
+                    <h3 class="modal__subtitle">Serviços Cadastrados</h3>
+                    <div id="servicosList" class="generic-list"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -330,12 +373,36 @@
                         <table id="treatmentResultTable" class="data-table">
                               <thead>
                                   <tr>
-                                      <th>TIPO</th><th>ITENS</th><th>DESCRIÇÃO</th><th>AMBIENTE</th><th>COR</th><th>PRODUTO</th><th>CATEGORIA</th>
+                                      <th>TIPO</th><th>DESCRIÇÃO</th><th>COR</th><th>PRODUTO</th><th>CATEGORIA</th>
                                   </tr>
                               </thead>
                               <tbody></tbody>
                         </table>
                     </div>
+                    
+                    <div class="modal__section">
+                        <h3 class="section-title">Acompanhamento de Serviços</h3>
+                        <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto; align-items: end; gap: 1rem; background-color: var(--color-bg); padding: 1rem; border-radius: 8px;">
+                            <div>
+                                <label for="servicoFuncionario" class="modal__subtitle" style="margin-bottom: 0.5rem; display: block;">Funcionário</label>
+                                <select id="servicoFuncionario" class="form-select"></select>
+                            </div>
+                            <div>
+                                <label for="servicoEtapa" class="modal__subtitle" style="margin-bottom: 0.5rem; display: block;">Etapa</label>
+                                <select id="servicoEtapa" class="form-select"></select>
+                            </div>
+                            <div>
+                                <label for="servicoData" class="modal__subtitle" style="margin-bottom: 0.5rem; display: block;">Data</label>
+                                <input type="date" id="servicoData" class="form-input">
+                            </div>
+                            <button id="saveClientService" class="btn btn--success">Adicionar</button>
+                        </div>
+                    </div>
+                    
+                    <div class="modal__section">
+                         <div id="client-service-log"></div>
+                    </div>
+                    
                 </div>
                 <div class="treatment-summary-sidebar">
                     <h3 class="section-title">Resumo Geral</h3>
@@ -378,6 +445,7 @@
         let rulesPartRef;
         let rules = [];
         let partRules = [];
+        let currentClientId = null;
 
         // --- CONTROLE DE NAVEGAÇÃO E MODAIS ---
         const mainContainer = document.querySelector('.app-container');
@@ -404,6 +472,7 @@
         
         function showConfigModal() {
             configModal.style.display = 'flex';
+            showConfigView('regras');
             loadConfigForms('romaneio');
         }
         
@@ -417,6 +486,13 @@
         document.getElementById('analyzeTableButton').onclick = showAnalysisModal;
         
         // --- LÓGICA DA TELA DE CONFIGURAÇÃO (FUNCIONAL E COMPLETA) ---
+        function showConfigView(viewName) {
+            document.querySelectorAll('.config-view').forEach(v => v.classList.remove('active'));
+            document.getElementById(`config-view-${viewName}`).classList.add('active');
+            if(viewName === 'funcionarios') loadGenericList('funcionario');
+            if(viewName === 'servicos') loadGenericList('servico');
+        }
+
         function loadConfigForms(mode) {
             const romaneioBtn = document.getElementById('config-mode-romaneio');
             const producaoBtn = document.getElementById('config-mode-producao');
@@ -578,7 +654,7 @@
             if (type === 'part') {
                 quantityInput = `<input type="number" class="checklist-item-quantity form-input" value="${itemData.quantity || 1}" min="1" style="width: 80px;">`;
             }
-            const deleteButton = `<button type="button" class="btn--icon" onclick="this.parentElement.remove()"><i data-feather="x-circle" style="width:20px; height:20px;"></i></button>`;
+            const deleteButton = `<button type="button" class="btn--icon btn--danger" onclick="this.parentElement.remove()"><i data-feather="x-circle" style="width:20px; height:20px;"></i></button>`;
             
             wrapper.innerHTML = handle + symbolSelect + textInput + quantityInput + deleteButton;
             if(itemData.symbol) wrapper.querySelector('.checklist-item-symbol').value = itemData.symbol;
@@ -689,31 +765,91 @@
         document.getElementById('saveClientButton').addEventListener('click', saveClient);
 
         // --- LÓGICA DA TELA DE CLIENTES ---
+        function calculateTotalPieces(spreadsheetData) {
+            if (!spreadsheetData || spreadsheetData.length === 0) {
+                return 0;
+            }
+            let total = 0;
+            const headerRowIndex = spreadsheetData.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).toUpperCase().includes('CÓDIGO')));
+            if (headerRowIndex === -1) return 0;
+
+            const header = spreadsheetData[headerRowIndex];
+            const qtdIndex = header.findIndex(h => String(h).toUpperCase().includes('QTD'));
+            if (qtdIndex === -1) return 0;
+
+            const dataRows = spreadsheetData.slice(headerRowIndex + 1);
+            dataRows.forEach(row => {
+                const qtyStr = row[qtdIndex] ? String(row[qtdIndex]).replace(",", ".") : '0';
+                if (qtyStr.trim() !== '' && !isNaN(qtyStr)) {
+                    total += parseFloat(qtyStr);
+                }
+            });
+            return total;
+        }
+
+        function updateClientStatus(clientId, field, value) {
+            const path = `dados/client_status/${clientId}/${field}`;
+            database.ref(path).set(value);
+        }
+
         function loadClientsList() {
             const listBody = document.getElementById('production-clients-list');
-            listBody.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+            listBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
             const clientsRef = database.ref('dados/producao_clientes');
+            
             clientsRef.on('value', snapshot => {
                 listBody.innerHTML = '';
                 const clients = snapshot.val();
                 if (clients) {
                     Object.entries(clients).forEach(([clientId, client]) => {
                         const row = document.createElement('tr');
+                        row.id = `client-row-${clientId}`;
+
+                        const totalPieces = calculateTotalPieces(client.spreadsheetData);
+
                         row.innerHTML = `
                             <td class="data-table__td">${client.name}</td>
+                            <td class="data-table__td">${totalPieces}</td>
+                            <td class="data-table__td status-cell">Carregando...</td>
+                            <td class="data-table__td stage-cell">Carregando...</td>
                             <td class="data-table__td">
                                 <div style="display: flex; gap: 0.5rem; justify-content: flex-start;">
-                                    <button class="btn btn--primary" onclick="openProductionChecklistInNewTab('${clientId}')">Ver Ordem</button>
-                                    <button class="btn btn--success" onclick="showItemTreatmentView('${clientId}')">Tratar Itens</button>
+                                    <button class="btn btn--success" onclick="showItemTreatmentView('${clientId}')">Resumo</button>
                                     <button class="btn btn--success" style="background-color: #5a67d8;" onclick="generateDocument('${clientId}', 'producao')">Produção</button>
                                     <button class="btn btn--secondary" onclick="generateDocument('${clientId}', 'romaneio')">Romaneio</button>
-                                    <button class="btn btn--warning btn--icon" title="Compartilhar Link" onclick="shareProductionChecklistLink('${clientId}')"><i data-feather="share-2"></i></button>
                                 </div>
                             </td>`;
                         listBody.appendChild(row);
+
+                        const statusRef = database.ref(`dados/client_status/${clientId}`);
+                        statusRef.on('value', statusSnapshot => {
+                            const statusData = statusSnapshot.val() || {};
+                            const currentStatus = statusData.andamento || 'Não iniciado';
+                            const currentStage = statusData.etapa || 'Corte';
+
+                            const statusCell = document.querySelector(`#client-row-${clientId} .status-cell`);
+                            statusCell.innerHTML = `
+                                <select class="form-select" onchange="updateClientStatus('${clientId}', 'andamento', this.value)">
+                                    <option value="Não iniciado" ${currentStatus === 'Não iniciado' ? 'selected' : ''}>Não iniciado</option>
+                                    <option value="Em andamento" ${currentStatus === 'Em andamento' ? 'selected' : ''}>Em andamento</option>
+                                    <option value="Concluído" ${currentStatus === 'Concluído' ? 'selected' : ''}>Concluído</option>
+                                </select>
+                            `;
+
+                            const stageCell = document.querySelector(`#client-row-${clientId} .stage-cell`);
+                            stageCell.innerHTML = `
+                                <select class="form-select" onchange="updateClientStatus('${clientId}', 'etapa', this.value)">
+                                    <option value="Corte" ${currentStage === 'Corte' ? 'selected' : ''}>Corte</option>
+                                    <option value="Usinagem" ${currentStage === 'Usinagem' ? 'selected' : ''}>Usinagem</option>
+                                    <option value="Solda" ${currentStage === 'Solda' ? 'selected' : ''}>Solda</option>
+                                    <option value="Montagem" ${currentStage === 'Montagem' ? 'selected' : ''}>Montagem</option>
+                                    <option value="Conferência" ${currentStage === 'Conferência' ? 'selected' : ''}>Conferência</option>
+                                </select>
+                            `;
+                        });
                     });
                 } else {
-                    listBody.innerHTML = '<tr><td colspan="2">Nenhum cliente em produção.</td></tr>';
+                    listBody.innerHTML = '<tr><td colspan="5">Nenhum cliente em produção.</td></tr>';
                 }
                 feather.replace();
             });
@@ -895,6 +1031,7 @@
         }
 
         async function showItemTreatmentView(clientId) {
+            currentClientId = clientId;
             const clientSnapshot = await database.ref(`dados/producao_clientes/${clientId}`).once('value');
             const clientData = clientSnapshot.val();
             if (!clientData || !clientData.spreadsheetData) {
@@ -902,7 +1039,7 @@
                 return;
             }
             
-            document.getElementById('treatment-client-name').textContent = `Tratamento de Itens: ${clientData.name}`;
+            document.getElementById('treatment-client-name').textContent = `Resumo do Cliente: ${clientData.name}`;
 
             const data = clientData.spreadsheetData;
             let processedData = [];
@@ -916,25 +1053,24 @@
             const dataRows = data.slice(headerRowIndex + 1);
             
             const tipoIndex = header.findIndex(h => String(h).toUpperCase().includes('TIPO'));
-            const itensIndex = header.findIndex(h => String(h).toUpperCase().includes('ITENS'));
             const descIndex = header.findIndex(h => String(h).toUpperCase().includes('DESCRIÇÃO'));
-            const ambienteIndex = header.findIndex(h => String(h).toUpperCase().includes('AMBIENTE'));
             const corIndex = header.findIndex(h => String(h).toUpperCase().includes('COR'));
             const qtdIndex = header.findIndex(h => String(h).toUpperCase().includes('QTD'));
+            const itensIndex = header.findIndex(h => String(h).toUpperCase().includes('ITENS'));
+
 
             dataRows.forEach(row => {
                 const quantidadeStr = qtdIndex !== -1 ? String(row[qtdIndex]).replace(",", ".") : '0';
                 if (row.length > 1 && quantidadeStr.trim() !== '' && !isNaN(quantidadeStr)) {
                     const tipo = tipoIndex !== -1 ? row[tipoIndex] : '';
-                    const itens = itensIndex !== -1 ? row[itensIndex] : '';
                     const descricao = descIndex !== -1 ? row[descIndex] : '';
-                    const ambiente = ambienteIndex !== -1 ? row[ambienteIndex] : '';
                     const cor = corIndex !== -1 ? row[corIndex] : '';
+                    const itens = itensIndex !== -1 ? row[itensIndex] : '';
                     const produto = getCodigo(descricao);
                     const categoria = getCodigo2(itens);
                     const quantidade = parseFloat(quantidadeStr);
                     
-                    processedData.push([tipo, itens, descricao, ambiente, cor, produto, categoria, quantidade]);
+                    processedData.push({tipo, descricao, cor, produto, categoria});
 
                     if (produto) {
                         summaryCounts[produto] = (summaryCounts[produto] || 0) + quantidade;
@@ -948,7 +1084,11 @@
             resultTbody.innerHTML = '';
             processedData.forEach(row => {
                 const tr = document.createElement('tr');
-                tr.innerHTML = row.slice(0, 7).map(cell => `<td>${cell || ''}</td>`).join('');
+                tr.innerHTML = `<td>${row.tipo || ''}</td>
+                                <td>${row.descricao || ''}</td>
+                                <td>${row.cor || ''}</td>
+                                <td>${row.produto || ''}</td>
+                                <td>${row.categoria || ''}</td>`;
                 resultTbody.appendChild(tr);
             });
 
@@ -969,6 +1109,12 @@
             Object.entries(summaryCounts2).forEach(([item, qtd]) => {
                 summaryTbodyCategory.innerHTML += `<tr><td>${item}</td><td>${qtd}</td></tr>`;
             });
+            
+            await populateDropdown('funcionarios', 'servicoFuncionario');
+            await populateDropdown('servicos', 'servicoEtapa');
+            document.getElementById('servicoData').valueAsDate = new Date();
+            renderClientServices(clientId);
+
 
             treatmentModal.style.display = 'flex';
         }
@@ -1133,6 +1279,104 @@
 
         const showRomaneioChecklistView = (clientId) => showChecklistView('romaneio', clientId);
         const showProductionChecklistView = (clientId) => showChecklistView('producao', clientId);
+
+        // --- LÓGICA PARA FUNCIONÁRIOS E SERVIÇOS ---
+        function saveGenericItem(type) {
+            const nameInput = document.getElementById(`${type}Name`);
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert('O nome não pode estar vazio.');
+                return;
+            }
+            database.ref(`dados/${type}s`).push({ name: name });
+            nameInput.value = '';
+        }
+
+        function deleteGenericItem(type, id) {
+            if (confirm('Tem certeza que deseja excluir?')) {
+                database.ref(`dados/${type}s/${id}`).remove();
+            }
+        }
+
+        function loadGenericList(type) {
+            const listEl = document.getElementById(`${type}sList`);
+            const ref = database.ref(`dados/${type}s`);
+            ref.on('value', snapshot => {
+                listEl.innerHTML = '';
+                const data = snapshot.val();
+                if (data) {
+                    Object.entries(data).forEach(([key, item]) => {
+                        const itemEl = document.createElement('div');
+                        itemEl.className = 'generic-list-item';
+                        itemEl.innerHTML = `
+                            <div class="generic-list-item__info">${item.name}</div>
+                            <div class="generic-list-item__actions">
+                                <button onclick="deleteGenericItem('${type}', '${key}')" class="btn btn--icon btn--danger"><i data-feather="trash-2"></i></button>
+                            </div>
+                        `;
+                        listEl.appendChild(itemEl);
+                    });
+                } else {
+                    listEl.innerHTML = `<p>Nenhum item cadastrado.</p>`;
+                }
+                feather.replace();
+            });
+        }
+        
+        async function populateDropdown(type, elementId) {
+            const selectEl = document.getElementById(elementId);
+            selectEl.innerHTML = '<option>Carregando...</option>';
+            const snapshot = await database.ref(`dados/${type}s`).once('value');
+            const data = snapshot.val();
+            selectEl.innerHTML = '';
+            if (data) {
+                Object.entries(data).forEach(([key, item]) => {
+                    selectEl.innerHTML += `<option value="${item.name}">${item.name}</option>`;
+                });
+            } else {
+                selectEl.innerHTML = `<option>Nenhum item cadastrado</option>`;
+            }
+        }
+        
+        document.getElementById('saveFuncionario').addEventListener('click', () => saveGenericItem('funcionario'));
+        document.getElementById('saveServico').addEventListener('click', () => saveGenericItem('servico'));
+
+        // --- LÓGICA DE ACOMPANHAMENTO DE SERVIÇOS DO CLIENTE ---
+        document.getElementById('saveClientService').addEventListener('click', () => {
+            if (!currentClientId) return;
+            const funcionario = document.getElementById('servicoFuncionario').value;
+            const etapa = document.getElementById('servicoEtapa').value;
+            const data = document.getElementById('servicoData').value;
+
+            if (!funcionario || !etapa || !data) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const serviceLog = { funcionario, etapa, data };
+            database.ref(`dados/client_services/${currentClientId}`).push(serviceLog);
+        });
+        
+        function renderClientServices(clientId) {
+            const container = document.getElementById('client-service-log');
+            const ref = database.ref(`dados/client_services/${clientId}`);
+            ref.on('value', snapshot => {
+                container.innerHTML = '<h4>Serviços Realizados</h4>';
+                const data = snapshot.val();
+                if (data) {
+                    const table = document.createElement('table');
+                    table.className = 'data-table';
+                    table.innerHTML = `<thead><tr><th>Data</th><th>Funcionário</th><th>Etapa</th></tr></thead><tbody></tbody>`;
+                    const tbody = table.querySelector('tbody');
+                    Object.values(data).sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(log => {
+                        tbody.innerHTML += `<tr><td>${new Date(log.data + 'T00:00:00').toLocaleDateString()}</td><td>${log.funcionario}</td><td>${log.etapa}</td></tr>`;
+                    });
+                    container.appendChild(table);
+                } else {
+                    container.innerHTML += '<p>Nenhum serviço registrado para este cliente.</p>';
+                }
+            });
+        }
 
 
         // --- INICIALIZAÇÃO ---
