@@ -487,6 +487,7 @@
         let rules = [];
         let partRules = [];
         let currentClientId = null;
+        let currentServiceLogs = {};
 
         // --- CONTROLE DE NAVEGAÇÃO E MODAIS ---
         const mainContainer = document.querySelector('.app-container');
@@ -1405,10 +1406,10 @@
         function renderClientServices(clientId) {
             const ref = database.ref(`dados/client_services/${clientId}`);
             ref.on('value', snapshot => {
-                const serviceLogs = snapshot.val() || {};
-                setupServiceViewSwitcher(clientId, serviceLogs);
+                currentServiceLogs = snapshot.val() || {};
+                setupServiceViewSwitcher(clientId, currentServiceLogs);
                 // Renderiza a view ativa por padrão (tabela)
-                renderServicesAsTable(clientId, serviceLogs);
+                renderServicesAsTable(clientId, currentServiceLogs);
             });
         }
 
@@ -1451,14 +1452,21 @@
             if (Object.keys(serviceLogs).length > 0) {
                 const table = document.createElement('table');
                 table.className = 'data-table';
-                table.innerHTML = `<thead><tr><th>Data</th><th>Funcionário</th><th>Etapa</th></tr></thead><tbody></tbody>`;
+                table.innerHTML = `<thead><tr><th>Data</th><th>Funcionário</th><th>Etapa</th><th>Ações</th></tr></thead><tbody></tbody>`;
                 const tbody = table.querySelector('tbody');
-                Object.values(serviceLogs).sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(log => {
-                    tbody.innerHTML += `<tr><td>${new Date(log.data + 'T00:00:00').toLocaleDateString()}</td><td>${log.funcionario}</td><td>${log.etapa}</td></tr>`;
+                Object.entries(serviceLogs).sort(([,a],[,b]) => new Date(b.data) - new Date(a.data)).forEach(([id, log]) => {
+                    tbody.innerHTML += `<tr><td>${new Date(log.data + 'T00:00:00').toLocaleDateString()}</td><td>${log.funcionario}</td><td>${log.etapa}</td><td><button class="btn btn--icon btn--danger" onclick="deleteClientService('${clientId}', '${id}')"><i data-feather="trash-2"></i></button></td></tr>`;
                 });
                 container.appendChild(table);
+                feather.replace();
             } else {
                 container.innerHTML = '<p>Nenhum serviço registrado para este cliente.</p>';
+            }
+        }
+
+        function deleteClientService(clientId, serviceId) {
+            if (confirm('Tem certeza que deseja excluir este serviço?')) {
+                database.ref(`dados/client_services/${clientId}/${serviceId}`).remove();
             }
         }
 
@@ -1554,7 +1562,7 @@
             const isOtherMonth = new Date().getMonth() !== date.getMonth();
             const hasEntries = dayEntries.length > 0;
             const dayClass = `calendar-day ${isOtherMonth ? 'calendar-day--other-month' : ''} ${hasEntries ? 'calendar-day-with-entries' : ''}`;
-            const onClick = hasEntries ? `onclick="showDayDetails('${dateString}', JSON.stringify(${JSON.stringify(dayEntries)}))"` : '';
+            const onClick = hasEntries ? `onclick="showDayDetails('${dateString}')"` : '';
 
             return `<div class="${dayClass}" ${onClick}>
                         <div class="calendar-day-number">${date.getDate()}</div>
@@ -1562,8 +1570,8 @@
                      </div>`;
         }
         
-        function showDayDetails(dateString, entriesString) {
-            const entries = JSON.parse(entriesString);
+        function showDayDetails(dateString) {
+            const entries = Object.values(currentServiceLogs).filter(log => log.data === dateString);
             const modal = document.getElementById('serviceDayDetailModal');
             const titleEl = document.getElementById('serviceDayDetailTitle');
             const contentEl = document.getElementById('serviceDayDetailContent');
