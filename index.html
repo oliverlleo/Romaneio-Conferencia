@@ -134,6 +134,21 @@
         #treatmentResultTable tbody tr:nth-child(even) { background-color: #F8FAFC; }
         #treatmentResultTable tbody tr:hover { background-color: #F1F5F9; }
 
+        /* --- ESTILOS DO CALENDÁRIO --- */
+        .view-switcher { margin-bottom: 1rem; display: flex; gap: 0.5rem; }
+        .view-switcher .btn { flex-grow: 0; background-color: var(--color-bg); color: var(--color-text-light); }
+        .view-switcher .btn.active { background-color: var(--color-accent-secondary); color: white; }
+        .calendar-container { margin-top: 1rem; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day-name { font-weight: 600; text-align: center; font-size: 0.8rem; color: var(--color-text-light); padding-bottom: 0.5rem; }
+        .calendar-day { border: 1px solid var(--color-border); border-radius: 6px; min-height: 100px; padding: 0.5rem; font-size: 0.9rem; }
+        .calendar-day--other-month { background-color: #F8FAFC; color: var(--color-text-light); }
+        .calendar-day-number { font-weight: 600; }
+        .calendar-entry { font-size: 0.75rem; background-color: var(--color-accent-primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; margin-top: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .service-log-view { display: none; }
+        .service-log-view.active { display: block; }
+
         /* --- [INÍCIO] ESTILOS DE ACESSIBILIDADE PARA CHECKLIST ONLINE --- */
         .checklist-page .romaneio-item__checklist-item {
             padding: 0.5rem 0; /* Adiciona espaçamento vertical */
@@ -400,7 +415,20 @@
                     </div>
                     
                     <div class="modal__section">
-                         <div id="client-service-log"></div>
+                         <div style="display: flex; justify-content: space-between; align-items: center;">
+                             <h4 style="margin-bottom: 1rem;">Serviços Realizados</h4>
+                             <div class="view-switcher">
+                                 <button id="tableViewBtn" class="btn active"><i data-feather="list"></i> Tabela</button>
+                                 <button id="calendarViewBtn" class="btn"><i data-feather="calendar"></i> Calendário</button>
+                             </div>
+                         </div>
+                         <div id="client-service-log-table" class="service-log-view active"></div>
+                         <div id="client-service-log-calendar" class="service-log-view"></div>
+                    </div>
+
+                    <div class="modal__section">
+                        <h3 class="section-title">Andamento das Etapas do Projeto</h3>
+                        <div id="etapas-andamento-container"></div>
                     </div>
                     
                 </div>
@@ -1114,6 +1142,7 @@
             await populateDropdown('servico', 'servicoEtapa');
             document.getElementById('servicoData').valueAsDate = new Date();
             renderClientServices(clientId);
+            renderEtapasAndamento(clientId);
 
 
             treatmentModal.style.display = 'flex';
@@ -1358,24 +1387,150 @@
         });
         
         function renderClientServices(clientId) {
-            const container = document.getElementById('client-service-log');
             const ref = database.ref(`dados/client_services/${clientId}`);
             ref.on('value', snapshot => {
-                container.innerHTML = '<h4>Serviços Realizados</h4>';
-                const data = snapshot.val();
-                if (data) {
-                    const table = document.createElement('table');
-                    table.className = 'data-table';
-                    table.innerHTML = `<thead><tr><th>Data</th><th>Funcionário</th><th>Etapa</th></tr></thead><tbody></tbody>`;
-                    const tbody = table.querySelector('tbody');
-                    Object.values(data).sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(log => {
-                        tbody.innerHTML += `<tr><td>${new Date(log.data + 'T00:00:00').toLocaleDateString()}</td><td>${log.funcionario}</td><td>${log.etapa}</td></tr>`;
-                    });
-                    container.appendChild(table);
-                } else {
-                    container.innerHTML += '<p>Nenhum serviço registrado para este cliente.</p>';
-                }
+                const serviceLogs = snapshot.val() || {};
+                setupServiceViewSwitcher(clientId, serviceLogs);
+                // Renderiza a view ativa por padrão (tabela)
+                renderServicesAsTable(clientId, serviceLogs);
             });
+        }
+
+        function setupServiceViewSwitcher(clientId, serviceLogs) {
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            const calendarViewBtn = document.getElementById('calendarViewBtn');
+            const tableView = document.getElementById('client-service-log-table');
+            const calendarView = document.getElementById('client-service-log-calendar');
+
+            tableViewBtn.onclick = () => {
+                tableView.classList.add('active');
+                calendarView.classList.remove('active');
+                tableViewBtn.classList.add('active');
+                calendarViewBtn.classList.remove('active');
+                renderServicesAsTable(clientId, serviceLogs);
+            };
+            calendarViewBtn.onclick = () => {
+                tableView.classList.remove('active');
+                calendarView.classList.add('active');
+                tableViewBtn.classList.remove('active');
+                calendarViewBtn.classList.add('active');
+                renderServicesAsCalendar(clientId, serviceLogs, new Date());
+            };
+        }
+
+        function renderServicesAsTable(clientId, serviceLogs) {
+            const container = document.getElementById('client-service-log-table');
+            container.innerHTML = '';
+            if (Object.keys(serviceLogs).length > 0) {
+                const table = document.createElement('table');
+                table.className = 'data-table';
+                table.innerHTML = `<thead><tr><th>Data</th><th>Funcionário</th><th>Etapa</th></tr></thead><tbody></tbody>`;
+                const tbody = table.querySelector('tbody');
+                Object.values(serviceLogs).sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(log => {
+                    tbody.innerHTML += `<tr><td>${new Date(log.data + 'T00:00:00').toLocaleDateString()}</td><td>${log.funcionario}</td><td>${log.etapa}</td></tr>`;
+                });
+                container.appendChild(table);
+            } else {
+                container.innerHTML = '<p>Nenhum serviço registrado para este cliente.</p>';
+            }
+        }
+
+        function renderServicesAsCalendar(clientId, serviceLogs, date) {
+            const container = document.getElementById('client-service-log-calendar');
+            container.innerHTML = '';
+
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+            const currentMonth = date.getMonth();
+            const currentYear = date.getFullYear();
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            let calendarHTML = `
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button class="btn btn--icon" id="prevMonthBtn"><i data-feather="chevron-left"></i></button>
+                        <h4 class="section-title" style="margin:0;">${monthNames[currentMonth]} ${currentYear}</h4>
+                        <button class="btn btn--icon" id="nextMonthBtn"><i data-feather="chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid">
+                        ${dayNames.map(name => `<div class="calendar-day-name">${name}</div>`).join('')}
+            `;
+
+            for (let i = 0; i < firstDay; i++) {
+                calendarHTML += `<div></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(currentYear, currentMonth, day);
+                const dateString = dayDate.toISOString().split('T')[0];
+                
+                let dayEntries = '';
+                Object.values(serviceLogs).forEach(log => {
+                    if (log.data === dateString) {
+                        dayEntries += `<div class="calendar-entry" title="${log.funcionario}: ${log.etapa}">${log.funcionario}: ${log.etapa}</div>`;
+                    }
+                });
+
+                calendarHTML += `<div class="calendar-day">
+                                    <div class="calendar-day-number">${day}</div>
+                                    ${dayEntries}
+                                 </div>`;
+            }
+
+            calendarHTML += `</div></div>`;
+            container.innerHTML = calendarHTML;
+            feather.replace();
+
+            document.getElementById('prevMonthBtn').onclick = () => renderServicesAsCalendar(clientId, serviceLogs, new Date(currentYear, currentMonth - 1, 1));
+            document.getElementById('nextMonthBtn').onclick = () => renderServicesAsCalendar(clientId, serviceLogs, new Date(currentYear, currentMonth + 1, 1));
+        }
+
+        async function updateEtapaStatus(clientId, servicoId, status) {
+            const path = `dados/etapa_status/${clientId}/${servicoId}`;
+            await database.ref(path).set(status);
+        }
+
+        async function renderEtapasAndamento(clientId) {
+            const container = document.getElementById('etapas-andamento-container');
+            container.innerHTML = 'Carregando etapas...';
+
+            const servicosSnapshot = await database.ref('dados/servicos').once('value');
+            const servicos = servicosSnapshot.val() || {};
+            
+            const statusSnapshot = await database.ref(`dados/etapa_status/${clientId}`).once('value');
+            const statuses = statusSnapshot.val() || {};
+
+            if (Object.keys(servicos).length === 0) {
+                container.innerHTML = '<p>Nenhum serviço cadastrado no sistema.</p>';
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'data-table';
+            table.innerHTML = `<thead><tr><th>Etapa</th><th>Andamento</th></tr></thead><tbody></tbody>`;
+            const tbody = table.querySelector('tbody');
+
+            Object.entries(servicos).forEach(([servicoId, servico]) => {
+                const currentStatus = statuses[servicoId] || 'Não iniciado';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${servico.name}</td>
+                    <td>
+                        <select class="form-select" onchange="updateEtapaStatus('${clientId}', '${servicoId}', this.value)">
+                            <option value="Não iniciado" ${currentStatus === 'Não iniciado' ? 'selected' : ''}>Não iniciado</option>
+                            <option value="Em andamento" ${currentStatus === 'Em andamento' ? 'selected' : ''}>Em andamento</option>
+                            <option value="Concluído" ${currentStatus === 'Concluído' ? 'selected' : ''}>Concluído</option>
+                        </select>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(table);
         }
 
 
