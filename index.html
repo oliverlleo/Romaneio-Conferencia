@@ -904,7 +904,7 @@
             const romaneioFooter = document.querySelector('#romaneioModal .romaneio-footer');
             romaneioFooter.innerHTML = `
                 <button onclick="window.print()" class="btn btn--primary" style="flex-grow: 0;"><i data-feather="printer"></i><span>Imprimir</span></button>
-                <button onclick="showRomaneioChecklistView('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>
+                <button onclick="openChecklistInNewTab('${clientId}')" class="btn btn--success" style="flex-grow: 0;"><i data-feather="check-square"></i><span>Checklist Online</span></button>
             `;
             feather.replace();
 
@@ -1206,6 +1206,12 @@
             navigator.clipboard.writeText(shareUrl).then(() => alert('Link do checklist copiado!'));
         }
 
+        function openChecklistInNewTab(clientId) {
+            document.getElementById('romaneioModal').style.display = 'none';
+            const checklistUrl = `${window.location.href.split('#')[0]}#romaneio-checklist=${clientId}`;
+            window.open(checklistUrl, '_blank');
+        }
+
         function updateRomaneioChecklistStatus(clientId, itemPos, itemText, isChecked) {
             database.ref(`dados/romaneio_checklist_status/${clientId}/${itemPos}`).update({ [itemText]: isChecked });
         }
@@ -1259,21 +1265,32 @@
                     const itemDesc = descColumnIndex !== -1 ? String(rowData[descColumnIndex] || '') : 'Sem descrição';
                     
                     let combinedChecklist = [];
-                    romaneioPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push(i)));
-                    romaneioRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => combinedChecklist.push({ ...i, quantity: 1 })));
+                    romaneioPartRules
+                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                        .forEach(r => r.checklist.forEach(i => {
+                            if (i && i.text) combinedChecklist.push(i);
+                        }));
+                    romaneioRules
+                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                        .forEach(r => r.checklist.forEach(i => {
+                            if (i && i.text) combinedChecklist.push({ ...i, quantity: 1 });
+                        }));
+
 
                     if (combinedChecklist.length > 0) {
                         let checklistHTML = `<h4 class="romaneio-item__checklist-title">Itens de Conferência</h4>`;
                         combinedChecklist.forEach((checkItem, checkIndex) => {
-                            const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
-                            const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
-                            checklistHTML += `
-                                <div class="interactive-checklist-item">
-                                    <label for="${checkId}">
-                                        <input type="checkbox" id="${checkId}" onchange="updateRomaneioChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
-                                        <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
-                                    </label>
-                                </div>`;
+                            if (checkItem && checkItem.text) {
+                                const safeItemText = (checkItem.text || '').replace(/[^a-zA-Z0-9]/g, '');
+                                const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
+                                checklistHTML += `
+                                    <div class="interactive-checklist-item">
+                                        <label for="${checkId}">
+                                            <input type="checkbox" id="${checkId}" onchange="updateRomaneioChecklistStatus('${clientId}', '${itemPos}', '${checkItem.text.replace(/'/g, "\\'")}', this.checked)">
+                                            <span>${checkItem.text} (Qtd: ${checkItem.quantity || 1})</span>
+                                        </label>
+                                    </div>`;
+                            }
                         });
                         
                         contentHTML += `
@@ -1299,10 +1316,18 @@
                                 if(itemRow) {
                                     const itemCode = String(itemRow[codeColumnIndex] || '').trim().toUpperCase();
                                     let tempCombinedChecklist = [];
-                                    romaneioPartRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push(i)));
-                                    romaneioRules.filter(r => itemCode.includes(r.codigo.toUpperCase())).forEach(r => r.checklist.forEach(i => tempCombinedChecklist.push({ ...i, quantity: 1 })));
+                                    romaneioPartRules
+                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                                        .forEach(r => r.checklist.forEach(i => {
+                                            if (i && i.text) tempCombinedChecklist.push(i);
+                                        }));
+                                    romaneioRules
+                                        .filter(r => itemCode.includes(r.codigo.toUpperCase()) && Array.isArray(r.checklist))
+                                        .forEach(r => r.checklist.forEach(i => {
+                                            if (i && i.text) tempCombinedChecklist.push({ ...i, quantity: 1 });
+                                        }));
                                     
-                                    const checkIndex = tempCombinedChecklist.findIndex(item => item.text === itemText);
+                                    const checkIndex = tempCombinedChecklist.findIndex(item => item && item.text === itemText);
                                     if(checkIndex !== -1) {
                                         const safeItemText = (itemText || '').replace(/[^a-zA-Z0-9]/g, '');
                                         const checkId = `romaneio-check-${clientId}-${itemPos}-${safeItemText}-${checkIndex}`;
